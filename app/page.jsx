@@ -18,6 +18,9 @@ const DEFAULT_AVATAR =
   </svg>
 `);
 
+const DEFAULT_REQUEST_IMAGE =
+  "https://images.unsplash.com/photo-1506947411487-a56738267384?auto=format&fit=crop&w=1000&q=80";
+
 const fallbackRequests = [
   {
     id: "req-1",
@@ -409,6 +412,36 @@ export default function Home() {
     setPilotForm({ ...pilotForm, avatar_url: data.publicUrl });
   }
 
+  async function uploadRequestImage(file) {
+    if (!session?.user) {
+      alert("의뢰 이미지를 올리려면 먼저 로그인해야 합니다.");
+      setStep("auth");
+      setRole("client");
+      return;
+    }
+
+    if (!file) return;
+
+    const ext = file.name.split(".").pop();
+    const filePath = `${session.user.id}/${Date.now()}.${ext}`;
+
+    const { error } = await supabase.storage
+      .from("request-images")
+      .upload(filePath, file, { upsert: true });
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    const { data } = supabase.storage.from("request-images").getPublicUrl(filePath);
+
+    setRequestForm({
+      ...requestForm,
+      thumbnail_url: data.publicUrl,
+    });
+  }
+
   async function handleSignup() {
     if (!authForm.email || !authForm.password || !authForm.name) {
       alert("이름, 이메일, 비밀번호를 입력해주세요.");
@@ -676,63 +709,61 @@ export default function Home() {
       </header>
 
       {step === "home" && (
-        <>
-          <section className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 px-6 py-20 lg:grid-cols-[0.9fr_1.1fr]">
-            <div>
-              <p className="mb-5 text-sm font-bold uppercase tracking-[0.25em] text-neutral-400">
-                Portfolio-first drone matching
-              </p>
+        <section className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 px-6 py-20 lg:grid-cols-[0.9fr_1.1fr]">
+          <div>
+            <p className="mb-5 text-sm font-bold uppercase tracking-[0.25em] text-neutral-400">
+              Portfolio-first drone matching
+            </p>
 
-              <h1 className="text-6xl font-black leading-[0.95] tracking-tight md:text-7xl">
-                Find the right
-                <br />
-                drone creator
-                <br />
-                by their work.
-              </h1>
+            <h1 className="text-6xl font-black leading-[0.95] tracking-tight md:text-7xl">
+              Find the right
+              <br />
+              drone creator
+              <br />
+              by their work.
+            </h1>
 
-              <p className="mt-8 max-w-xl text-lg leading-8 text-neutral-600">
-                의뢰자는 촬영 요청을 올리고, 촬영자는 포트폴리오로 지원합니다.
-                실제 결과물과 스타일을 보고 프로젝트에 맞는 촬영자를 선택하세요.
-              </p>
+            <p className="mt-8 max-w-xl text-lg leading-8 text-neutral-600">
+              의뢰자는 촬영 요청을 올리고, 촬영자는 포트폴리오로 지원합니다.
+              실제 결과물과 스타일을 보고 프로젝트에 맞는 촬영자를 선택하세요.
+            </p>
 
-              <div className="mt-10 flex flex-wrap gap-4">
-                <button onClick={startNewRequest} className={primaryButton}>
-                  의뢰 등록하기
-                </button>
-                <button onClick={() => setStep("pilots")} className={secondaryButton}>
-                  촬영자 보기
-                </button>
-              </div>
+            <div className="mt-10 flex flex-wrap gap-4">
+              <button onClick={startNewRequest} className={primaryButton}>
+                의뢰 등록하기
+              </button>
+              <button onClick={() => setStep("pilots")} className={secondaryButton}>
+                촬영자 보기
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-5 grid-rows-5 gap-4">
+            <div className="col-span-5 row-span-3 overflow-hidden rounded-[2rem] bg-white shadow-2xl shadow-neutral-200">
+              <img
+                src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80"
+                className="h-full w-full object-cover"
+                alt="hero"
+              />
             </div>
 
-            <div className="grid grid-cols-5 grid-rows-5 gap-4">
-              <div className="col-span-5 row-span-3 overflow-hidden rounded-[2rem] bg-white shadow-2xl shadow-neutral-200">
-                <img
-                  src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80"
-                  className="h-full w-full object-cover"
-                  alt="hero"
-                />
-              </div>
-
-              <div className="col-span-2 row-span-2 overflow-hidden rounded-[2rem] bg-white shadow-xl shadow-neutral-200">
-                <img
-                  src="https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=900&q=80"
-                  className="h-full w-full object-cover"
-                  alt="building"
-                />
-              </div>
-
-              <div className="col-span-3 row-span-2 overflow-hidden rounded-[2rem] bg-white shadow-xl shadow-neutral-200">
-                <img
-                  src="https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=900&q=80"
-                  className="h-full w-full object-cover"
-                  alt="forest"
-                />
-              </div>
+            <div className="col-span-2 row-span-2 overflow-hidden rounded-[2rem] bg-white shadow-xl shadow-neutral-200">
+              <img
+                src="https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=900&q=80"
+                className="h-full w-full object-cover"
+                alt="building"
+              />
             </div>
-          </section>
-        </>
+
+            <div className="col-span-3 row-span-2 overflow-hidden rounded-[2rem] bg-white shadow-xl shadow-neutral-200">
+              <img
+                src="https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=900&q=80"
+                className="h-full w-full object-cover"
+                alt="forest"
+              />
+            </div>
+          </div>
+        </section>
       )}
 
       {step === "auth" && (
@@ -1027,14 +1058,42 @@ export default function Home() {
                 value={requestForm.deadline}
                 onChange={(e) => setRequestForm({ ...requestForm, deadline: e.target.value })}
               />
-              <input
-                placeholder="썸네일 이미지 URL"
-                className={inputClass}
-                value={requestForm.thumbnail_url}
-                onChange={(e) =>
-                  setRequestForm({ ...requestForm, thumbnail_url: e.target.value })
-                }
-              />
+
+              <div className="rounded-2xl border border-neutral-200 bg-white p-4">
+                <p className="mb-3 text-sm font-bold text-neutral-700">
+                  의뢰 대표 이미지
+                </p>
+
+                <div className="flex items-center gap-4">
+                  <div className="h-24 w-32 overflow-hidden rounded-xl bg-neutral-100">
+                    {requestForm.thumbnail_url ? (
+                      <img
+                        src={requestForm.thumbnail_url}
+                        alt="의뢰 대표 이미지"
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = DEFAULT_REQUEST_IMAGE;
+                        }}
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-xs text-neutral-400">
+                        이미지 없음
+                      </div>
+                    )}
+                  </div>
+
+                  <label className="cursor-pointer rounded-full border border-neutral-300 px-5 py-3 text-sm font-bold transition hover:border-neutral-900">
+                    이미지 업로드
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => uploadRequestImage(e.target.files?.[0])}
+                    />
+                  </label>
+                </div>
+              </div>
+
               <input
                 placeholder="태그: 홍보 영상, 리조트, 4K"
                 className={`${inputClass} md:col-span-2`}
@@ -1053,7 +1112,10 @@ export default function Home() {
             />
 
             <div className="mt-6 flex gap-3">
-              <button onClick={saveRequest} className="flex-1 rounded-full bg-neutral-950 p-4 font-black text-white">
+              <button
+                onClick={saveRequest}
+                className="flex-1 rounded-full bg-neutral-950 p-4 font-black text-white"
+              >
                 {editingRequestId ? "의뢰 수정 저장" : "의뢰 등록하기"}
               </button>
               {editingRequestId && (
@@ -1098,12 +1160,12 @@ export default function Home() {
                 className="overflow-hidden rounded-[2rem] bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-neutral-200"
               >
                 <img
-                  src={
-                    req.thumbnail_url ||
-                    "https://images.unsplash.com/photo-1506947411487-a56738267384?auto=format&fit=crop&w=1000&q=80"
-                  }
+                  src={req.thumbnail_url || DEFAULT_REQUEST_IMAGE}
+                  onError={(e) => {
+                    e.currentTarget.src = DEFAULT_REQUEST_IMAGE;
+                  }}
                   className="h-56 w-full object-cover"
-                  alt={req.title}
+                  alt={req.title || "촬영 의뢰 이미지"}
                 />
 
                 <div className="p-6">
@@ -1182,12 +1244,12 @@ export default function Home() {
               >
                 <div className="relative overflow-hidden">
                   <img
-                    src={
-                      p.thumbnail_url ||
-                      "https://images.unsplash.com/photo-1506947411487-a56738267384?auto=format&fit=crop&w=1000&q=80"
-                    }
+                    src={p.thumbnail_url || DEFAULT_REQUEST_IMAGE}
                     className="h-72 w-full object-cover transition duration-700 group-hover:scale-105"
                     alt={p.display_name}
+                    onError={(e) => {
+                      e.currentTarget.src = DEFAULT_REQUEST_IMAGE;
+                    }}
                   />
                   <img
                     src={p.avatar_url || DEFAULT_AVATAR}
@@ -1454,10 +1516,10 @@ export default function Home() {
                 portfolio.map((item) => (
                   <div key={item.id} className="overflow-hidden rounded-2xl bg-neutral-50">
                     <img
-                      src={
-                        item.thumbnail_url ||
-                        "https://images.unsplash.com/photo-1506947411487-a56738267384?auto=format&fit=crop&w=1000&q=80"
-                      }
+                      src={item.thumbnail_url || DEFAULT_REQUEST_IMAGE}
+                      onError={(e) => {
+                        e.currentTarget.src = DEFAULT_REQUEST_IMAGE;
+                      }}
                       className="h-40 w-full object-cover"
                       alt={item.title}
                     />
