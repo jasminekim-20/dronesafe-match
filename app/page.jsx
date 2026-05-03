@@ -14,26 +14,26 @@ const fallbackPilots = [
     user_id: "mock-1",
     display_name: "Jeju Air Visual",
     region: "제주",
-    headline: "리조트·풀빌라 홍보영상 전문",
+    headline: "Resort & villa cinematic drone films",
     specialties: ["홍보영상", "여행콘텐츠", "부동산"],
-    style_tags: ["시네마틱", "감성적인", "자연광"],
+    style_tags: ["Cinematic", "Soft Light", "Resort"],
     price: 750000,
     delivery_rate: 97,
     reshoot_rate: 1.8,
     experience: "비행 경력 6년",
-    bio: "숙박업체와 관광 브랜드를 위한 항공 영상을 제작합니다.",
+    bio: "숙박업체와 관광 브랜드를 위한 감도 높은 항공 영상을 제작합니다.",
     portfolio_url: "https://www.youtube.com/watch?v=ScMzIvxBSi4",
     thumbnail_url:
-      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
   },
   {
     id: "mock-2",
     user_id: "mock-2",
-    display_name: "Seoul Skyline Drone",
+    display_name: "Seoul Skyline",
     region: "서울",
-    headline: "상업공간·건물 외관 항공 컷 전문",
+    headline: "Architecture & commercial space aerials",
     specialties: ["부동산", "홍보영상"],
-    style_tags: ["도시적인", "깔끔한", "브랜드형"],
+    style_tags: ["Architecture", "Urban", "Clean"],
     price: 620000,
     delivery_rate: 98,
     reshoot_rate: 1.5,
@@ -41,16 +41,16 @@ const fallbackPilots = [
     bio: "상업용 건물, 오피스, 모델하우스 촬영을 주로 진행합니다.",
     portfolio_url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     thumbnail_url:
-      "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1200&q=80",
   },
   {
     id: "mock-3",
     user_id: "mock-3",
-    display_name: "Forest Angle Studio",
+    display_name: "Forest Angle",
     region: "강원",
-    headline: "산악·캠핑·야외 행사 촬영 전문",
+    headline: "Outdoor, camping and nature brand films",
     specialties: ["행사", "여행콘텐츠"],
-    style_tags: ["자연친화적", "다큐멘터리", "역동적인"],
+    style_tags: ["Nature", "Documentary", "Mood"],
     price: 500000,
     delivery_rate: 94,
     reshoot_rate: 2.7,
@@ -58,7 +58,7 @@ const fallbackPilots = [
     bio: "아웃도어 브랜드와 야외 행사 스케치 촬영을 진행합니다.",
     portfolio_url: "",
     thumbnail_url:
-      "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1200&q=80",
   },
 ];
 
@@ -72,27 +72,27 @@ function youtubeEmbed(url) {
 }
 
 function getMatch(pilot, form) {
-  let score = 20;
+  let score = 25;
   const reasons = [];
 
   if (pilot.region === form.region) {
     score += 30;
-    reasons.push("촬영 지역이 일치합니다");
+    reasons.push("지역 경험 일치");
   }
 
   if ((pilot.specialties || []).includes(form.purpose)) {
     score += 30;
-    reasons.push("비슷한 촬영 포트폴리오가 있습니다");
+    reasons.push("비슷한 촬영 포트폴리오 보유");
   }
 
   if (Number(pilot.delivery_rate) >= 95) {
     score += 10;
-    reasons.push("납품 만족도가 높습니다");
+    reasons.push("납품 만족도 우수");
   }
 
   if (Number(pilot.reshoot_rate) <= 2) {
-    score += 10;
-    reasons.push("재촬영률이 낮습니다");
+    score += 5;
+    reasons.push("재촬영률 낮음");
   }
 
   return { ...pilot, score: Math.min(score, 100), reasons };
@@ -124,7 +124,7 @@ export default function Home() {
     region: "서울",
     headline: "",
     specialtiesText: "홍보영상, 부동산",
-    styleTagsText: "시네마틱, 감성적인",
+    styleTagsText: "Cinematic, Clean",
     price: 500000,
     delivery_rate: 96,
     reshoot_rate: 2.0,
@@ -283,35 +283,52 @@ export default function Home() {
       .sort((a, b) => b.score - a.score);
   }, [pilots, requestForm]);
 
+  const inputClass =
+    "w-full rounded-2xl border border-neutral-200 bg-white px-5 py-4 text-sm outline-none transition focus:border-neutral-900";
+
+  const primaryButton =
+    "rounded-full bg-neutral-950 px-7 py-4 text-sm font-bold text-white transition hover:bg-neutral-800";
+
+  const secondaryButton =
+    "rounded-full border border-neutral-300 bg-white px-7 py-4 text-sm font-bold text-neutral-900 transition hover:border-neutral-900";
+
   return (
-    <main className="min-h-screen bg-[#fbfaf7] text-gray-950">
-      <header className="sticky top-0 z-50 border-b bg-white/90 backdrop-blur">
+    <main className="min-h-screen bg-[#f7f6f3] text-neutral-950">
+      <header className="sticky top-0 z-50 border-b border-neutral-200 bg-[#f7f6f3]/90 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
           <button
             onClick={() => setStep("home")}
-            className="text-xl font-black text-orange-500"
+            className="text-xl font-black tracking-tight"
           >
             DroneSafeMatch
           </button>
 
-          <nav className="hidden gap-8 text-sm font-semibold text-gray-600 md:flex">
-            <button onClick={() => setStep("home")}>홈</button>
-            <button onClick={() => setStep("request")}>촬영 요청</button>
-            <button onClick={() => setStep("pilots")}>포트폴리오 보기</button>
-            <button onClick={() => setStep("pilotManage")}>촬영자 관리</button>
+          <nav className="hidden gap-8 text-sm font-semibold text-neutral-500 md:flex">
+            <button onClick={() => setStep("home")} className="hover:text-neutral-950">
+              Home
+            </button>
+            <button onClick={() => setStep("request")} className="hover:text-neutral-950">
+              Request
+            </button>
+            <button onClick={() => setStep("pilots")} className="hover:text-neutral-950">
+              Portfolio
+            </button>
+            <button onClick={() => setStep("pilotManage")} className="hover:text-neutral-950">
+              Creator Studio
+            </button>
           </nav>
 
           {session ? (
             <button
               onClick={() => supabase.auth.signOut()}
-              className="rounded-full border px-5 py-2 text-sm font-bold"
+              className="rounded-full border border-neutral-300 px-5 py-2 text-sm font-bold"
             >
               로그아웃
             </button>
           ) : (
             <button
               onClick={() => setStep("auth")}
-              className="rounded-full bg-orange-500 px-5 py-2 text-sm font-bold text-white"
+              className="rounded-full bg-neutral-950 px-5 py-2 text-sm font-bold text-white"
             >
               로그인 / 가입
             </button>
@@ -321,75 +338,74 @@ export default function Home() {
 
       {step === "home" && (
         <>
-          <section className="mx-auto grid max-w-7xl grid-cols-1 gap-12 px-6 py-20 lg:grid-cols-2">
+          <section className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 px-6 py-20 lg:grid-cols-[0.9fr_1.1fr]">
             <div>
-              <p className="mb-4 font-bold text-orange-500">
-                포트폴리오 기반 드론 촬영 매칭
-              </p>
-              <h1 className="text-5xl font-black leading-tight md:text-6xl">
-                잘 찍는 사람을
-                <br />
-                <span className="text-orange-500">영상으로 확인하고</span>
-                <br />
-                바로 연결하세요
-              </h1>
-              <p className="mt-7 text-lg leading-8 text-gray-600">
-                가격과 평점만 비교하지 않습니다. 실제 포트폴리오, 촬영 스타일,
-                지역 경험을 보고 내 프로젝트에 맞는 촬영자를 선택합니다.
+              <p className="mb-5 text-sm font-bold uppercase tracking-[0.25em] text-neutral-400">
+                Portfolio-first drone matching
               </p>
 
-              <div className="mt-9 flex gap-4">
-                <button
-                  onClick={() => setStep("request")}
-                  className="rounded-2xl bg-orange-500 px-7 py-4 font-black text-white shadow-xl shadow-orange-100"
-                >
-                  촬영 의뢰하기 →
+              <h1 className="text-6xl font-black leading-[0.95] tracking-tight md:text-7xl">
+                Find the right
+                <br />
+                drone creator
+                <br />
+                by their work.
+              </h1>
+
+              <p className="mt-8 max-w-xl text-lg leading-8 text-neutral-600">
+                가격과 평점보다 먼저, 실제 촬영 결과물과 스타일을 확인하세요.
+                프로젝트에 맞는 드론 촬영자를 포트폴리오로 비교하고 바로 연결합니다.
+              </p>
+
+              <div className="mt-10 flex flex-wrap gap-4">
+                <button onClick={() => setStep("request")} className={primaryButton}>
+                  촬영 의뢰하기
                 </button>
-                <button
-                  onClick={() => setStep("pilotManage")}
-                  className="rounded-2xl border bg-white px-7 py-4 font-black"
-                >
+                <button onClick={() => setStep("pilotManage")} className={secondaryButton}>
                   촬영자로 등록하기
                 </button>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              {fallbackPilots.slice(0, 4).map((p, i) => (
-                <div
-                  key={p.id}
-                  className={`overflow-hidden rounded-[2rem] bg-white shadow-xl ${
-                    i === 0 ? "col-span-2" : ""
-                  }`}
-                >
-                  <img
-                    src={p.thumbnail_url}
-                    className={`w-full object-cover ${i === 0 ? "h-72" : "h-44"}`}
-                    alt={p.display_name}
-                  />
-                </div>
-              ))}
+            <div className="grid grid-cols-5 grid-rows-5 gap-4">
+              <div className="col-span-5 row-span-3 overflow-hidden rounded-[2rem] bg-white shadow-2xl shadow-neutral-200">
+                <img
+                  src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80"
+                  className="h-full w-full object-cover"
+                  alt="hero"
+                />
+              </div>
+
+              <div className="col-span-2 row-span-2 overflow-hidden rounded-[2rem] bg-white shadow-xl shadow-neutral-200">
+                <img
+                  src="https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=900&q=80"
+                  className="h-full w-full object-cover"
+                  alt="building"
+                />
+              </div>
+
+              <div className="col-span-3 row-span-2 overflow-hidden rounded-[2rem] bg-white shadow-xl shadow-neutral-200">
+                <img
+                  src="https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=900&q=80"
+                  className="h-full w-full object-cover"
+                  alt="forest"
+                />
+              </div>
             </div>
           </section>
 
           <section className="mx-auto max-w-7xl px-6 pb-20">
-            <div className="rounded-[2rem] bg-white p-8 shadow-sm">
-              <p className="font-bold text-orange-500">핵심 방향</p>
-              <h2 className="mt-3 text-3xl font-black">
-                설명보다 결과물로 판단하는 플랫폼
-              </h2>
-              <div className="mt-8 grid gap-5 md:grid-cols-3">
-                {[
-                  ["영상 포트폴리오", "촬영자가 직접 등록한 대표작을 먼저 보여줍니다."],
-                  ["촬영 스타일", "감성적, 시네마틱, 도시적 등 스타일 태그로 비교합니다."],
-                  ["PR 강화", "촬영자가 자신의 강점과 사례를 직접 소개합니다."],
-                ].map(([t, d]) => (
-                  <div key={t} className="rounded-3xl bg-[#fff6ef] p-6">
-                    <h3 className="font-black">{t}</h3>
-                    <p className="mt-3 text-sm leading-6 text-gray-600">{d}</p>
-                  </div>
-                ))}
-              </div>
+            <div className="grid gap-5 md:grid-cols-3">
+              {[
+                ["Visual portfolio", "촬영자가 등록한 대표 영상과 썸네일 중심으로 비교합니다."],
+                ["Style tags", "시네마틱, 도시적, 자연광 등 스타일을 빠르게 파악합니다."],
+                ["Direct request", "마음에 드는 촬영자에게 바로 견적 요청을 보낼 수 있습니다."],
+              ].map(([title, desc]) => (
+                <div key={title} className="rounded-[2rem] bg-white p-7 shadow-sm">
+                  <h3 className="text-xl font-black">{title}</h3>
+                  <p className="mt-4 text-sm leading-6 text-neutral-500">{desc}</p>
+                </div>
+              ))}
             </div>
           </section>
         </>
@@ -397,20 +413,20 @@ export default function Home() {
 
       {step === "auth" && (
         <section className="mx-auto max-w-2xl px-6 py-16">
-          <div className="rounded-[2rem] bg-white p-8 shadow-xl">
+          <div className="rounded-[2rem] bg-white p-8 shadow-xl shadow-neutral-200">
             <div className="mb-6 flex gap-3">
               <button
                 onClick={() => setAuthMode("signup")}
-                className={`rounded-xl px-5 py-3 font-bold ${
-                  authMode === "signup" ? "bg-orange-500 text-white" : "bg-orange-50"
+                className={`rounded-full px-5 py-3 font-bold ${
+                  authMode === "signup" ? "bg-neutral-950 text-white" : "bg-neutral-100"
                 }`}
               >
                 회원가입
               </button>
               <button
                 onClick={() => setAuthMode("login")}
-                className={`rounded-xl px-5 py-3 font-bold ${
-                  authMode === "login" ? "bg-orange-500 text-white" : "bg-orange-50"
+                className={`rounded-full px-5 py-3 font-bold ${
+                  authMode === "login" ? "bg-neutral-950 text-white" : "bg-neutral-100"
                 }`}
               >
                 로그인
@@ -422,20 +438,20 @@ export default function Home() {
                 <button
                   onClick={() => setRole("client")}
                   className={`rounded-2xl border p-5 text-left ${
-                    role === "client" ? "border-orange-400 bg-orange-50" : ""
+                    role === "client" ? "border-neutral-950 bg-neutral-50" : "border-neutral-200"
                   }`}
                 >
                   <b>의뢰자</b>
-                  <p className="mt-2 text-sm text-gray-500">촬영을 맡기고 싶어요.</p>
+                  <p className="mt-2 text-sm text-neutral-500">촬영을 맡기고 싶어요.</p>
                 </button>
                 <button
                   onClick={() => setRole("pilot")}
                   className={`rounded-2xl border p-5 text-left ${
-                    role === "pilot" ? "border-orange-400 bg-orange-50" : ""
+                    role === "pilot" ? "border-neutral-950 bg-neutral-50" : "border-neutral-200"
                   }`}
                 >
                   <b>촬영자</b>
-                  <p className="mt-2 text-sm text-gray-500">내 포트폴리오를 올리고 싶어요.</p>
+                  <p className="mt-2 text-sm text-neutral-500">포트폴리오를 올리고 싶어요.</p>
                 </button>
               </div>
             )}
@@ -443,7 +459,7 @@ export default function Home() {
             {authMode === "signup" && (
               <input
                 placeholder="이름 또는 업체명"
-                className="mb-4 w-full rounded-xl border p-4"
+                className={`${inputClass} mb-4`}
                 value={authForm.name}
                 onChange={(e) => setAuthForm({ ...authForm, name: e.target.value })}
               />
@@ -451,21 +467,21 @@ export default function Home() {
 
             <input
               placeholder="이메일"
-              className="mb-4 w-full rounded-xl border p-4"
+              className={`${inputClass} mb-4`}
               value={authForm.email}
               onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })}
             />
             <input
               type="password"
               placeholder="비밀번호"
-              className="mb-4 w-full rounded-xl border p-4"
+              className={`${inputClass} mb-4`}
               value={authForm.password}
               onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })}
             />
 
             <button
               onClick={authMode === "signup" ? handleSignup : handleLogin}
-              className="w-full rounded-2xl bg-orange-500 p-4 font-black text-white"
+              className="w-full rounded-full bg-neutral-950 p-4 font-black text-white"
             >
               {authMode === "signup" ? "가입하기" : "로그인하기"}
             </button>
@@ -474,33 +490,33 @@ export default function Home() {
       )}
 
       {step === "pilotManage" && (
-        <section className="mx-auto max-w-5xl px-6 py-16">
-          <h2 className="text-4xl font-black">촬영자 프로필 관리</h2>
-          <p className="mt-3 text-gray-500">
-            자기소개, 촬영 스타일, 대표작을 등록해 의뢰자에게 PR하세요.
+        <section className="mx-auto max-w-6xl px-6 py-16">
+          <h2 className="text-5xl font-black tracking-tight">Creator Studio</h2>
+          <p className="mt-4 text-neutral-500">
+            촬영자 프로필과 포트폴리오를 등록하고 수정하세요.
           </p>
 
-          <div className="mt-8 grid gap-6 lg:grid-cols-2">
+          <div className="mt-10 grid gap-6 lg:grid-cols-2">
             <div className="rounded-[2rem] bg-white p-8 shadow-sm">
-              <h3 className="text-2xl font-black">프로필 수정</h3>
+              <h3 className="text-2xl font-black">Profile</h3>
 
               <div className="mt-6 grid gap-4">
                 <input
                   placeholder="업체명 / 활동명"
-                  className="rounded-xl border p-4"
+                  className={inputClass}
                   value={pilotForm.display_name}
                   onChange={(e) =>
                     setPilotForm({ ...pilotForm, display_name: e.target.value })
                   }
                 />
                 <input
-                  placeholder="한 줄 PR: 리조트·풀빌라 홍보영상 전문"
-                  className="rounded-xl border p-4"
+                  placeholder="한 줄 PR"
+                  className={inputClass}
                   value={pilotForm.headline}
                   onChange={(e) => setPilotForm({ ...pilotForm, headline: e.target.value })}
                 />
                 <select
-                  className="rounded-xl border p-4"
+                  className={inputClass}
                   value={pilotForm.region}
                   onChange={(e) => setPilotForm({ ...pilotForm, region: e.target.value })}
                 >
@@ -513,23 +529,23 @@ export default function Home() {
                 </select>
                 <input
                   placeholder="전문 분야: 홍보영상, 부동산, 행사"
-                  className="rounded-xl border p-4"
+                  className={inputClass}
                   value={pilotForm.specialtiesText}
                   onChange={(e) =>
                     setPilotForm({ ...pilotForm, specialtiesText: e.target.value })
                   }
                 />
                 <input
-                  placeholder="촬영 스타일: 시네마틱, 감성적인, 도시적인"
-                  className="rounded-xl border p-4"
+                  placeholder="촬영 스타일: Cinematic, Clean, Mood"
+                  className={inputClass}
                   value={pilotForm.styleTagsText}
                   onChange={(e) =>
                     setPilotForm({ ...pilotForm, styleTagsText: e.target.value })
                   }
                 />
                 <input
-                  placeholder="썸네일 이미지 URL"
-                  className="rounded-xl border p-4"
+                  placeholder="대표 썸네일 이미지 URL"
+                  className={inputClass}
                   value={pilotForm.thumbnail_url}
                   onChange={(e) =>
                     setPilotForm({ ...pilotForm, thumbnail_url: e.target.value })
@@ -537,7 +553,7 @@ export default function Home() {
                 />
                 <textarea
                   placeholder="자기소개"
-                  className="h-28 rounded-xl border p-4"
+                  className="h-28 rounded-2xl border border-neutral-200 p-4 outline-none focus:border-neutral-950"
                   value={pilotForm.bio}
                   onChange={(e) => setPilotForm({ ...pilotForm, bio: e.target.value })}
                 />
@@ -545,38 +561,38 @@ export default function Home() {
 
               <button
                 onClick={savePilotProfile}
-                className="mt-6 w-full rounded-2xl bg-orange-500 p-4 font-black text-white"
+                className="mt-6 w-full rounded-full bg-neutral-950 p-4 font-black text-white"
               >
                 프로필 저장 / 수정
               </button>
             </div>
 
             <div className="rounded-[2rem] bg-white p-8 shadow-sm">
-              <h3 className="text-2xl font-black">포트폴리오 추가</h3>
+              <h3 className="text-2xl font-black">Portfolio</h3>
 
               <div className="mt-6 grid gap-4">
                 <input
                   placeholder="영상 제목"
-                  className="rounded-xl border p-4"
+                  className={inputClass}
                   value={workForm.title}
                   onChange={(e) => setWorkForm({ ...workForm, title: e.target.value })}
                 />
                 <input
                   placeholder="유튜브 영상 링크"
-                  className="rounded-xl border p-4"
+                  className={inputClass}
                   value={workForm.video_url}
                   onChange={(e) => setWorkForm({ ...workForm, video_url: e.target.value })}
                 />
                 <input
                   placeholder="썸네일 이미지 URL"
-                  className="rounded-xl border p-4"
+                  className={inputClass}
                   value={workForm.thumbnail_url}
                   onChange={(e) =>
                     setWorkForm({ ...workForm, thumbnail_url: e.target.value })
                   }
                 />
                 <select
-                  className="rounded-xl border p-4"
+                  className={inputClass}
                   value={workForm.category}
                   onChange={(e) => setWorkForm({ ...workForm, category: e.target.value })}
                 >
@@ -587,7 +603,7 @@ export default function Home() {
                 </select>
                 <textarea
                   placeholder="작품 설명"
-                  className="h-24 rounded-xl border p-4"
+                  className="h-24 rounded-2xl border border-neutral-200 p-4 outline-none focus:border-neutral-950"
                   value={workForm.description}
                   onChange={(e) =>
                     setWorkForm({ ...workForm, description: e.target.value })
@@ -597,7 +613,7 @@ export default function Home() {
 
               <button
                 onClick={saveWork}
-                className="mt-6 w-full rounded-2xl bg-black p-4 font-black text-white"
+                className="mt-6 w-full rounded-full bg-neutral-950 p-4 font-black text-white"
               >
                 포트폴리오 등록
               </button>
@@ -609,10 +625,14 @@ export default function Home() {
       {step === "request" && (
         <section className="mx-auto max-w-3xl px-6 py-16">
           <div className="rounded-[2rem] bg-white p-8 shadow-sm">
-            <h2 className="text-3xl font-black">촬영 요청</h2>
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <h2 className="text-4xl font-black">촬영 요청</h2>
+            <p className="mt-3 text-neutral-500">
+              지역과 촬영 목적을 입력하면 포트폴리오 기반으로 추천합니다.
+            </p>
+
+            <div className="mt-8 grid gap-4 md:grid-cols-2">
               <select
-                className="rounded-xl border p-4"
+                className={inputClass}
                 value={requestForm.region}
                 onChange={(e) => setRequestForm({ ...requestForm, region: e.target.value })}
               >
@@ -624,7 +644,7 @@ export default function Home() {
                 <option>대전</option>
               </select>
               <select
-                className="rounded-xl border p-4"
+                className={inputClass}
                 value={requestForm.purpose}
                 onChange={(e) => setRequestForm({ ...requestForm, purpose: e.target.value })}
               >
@@ -634,15 +654,17 @@ export default function Home() {
                 <option>여행콘텐츠</option>
               </select>
             </div>
+
             <textarea
               placeholder="상세 요청사항"
-              className="mt-4 h-28 w-full rounded-xl border p-4"
+              className="mt-4 h-28 w-full rounded-2xl border border-neutral-200 p-4 outline-none focus:border-neutral-950"
               value={requestForm.detail}
               onChange={(e) => setRequestForm({ ...requestForm, detail: e.target.value })}
             />
+
             <button
               onClick={() => setStep("pilots")}
-              className="mt-6 w-full rounded-2xl bg-orange-500 p-4 font-black text-white"
+              className="mt-6 w-full rounded-full bg-neutral-950 p-4 font-black text-white"
             >
               포트폴리오 기반 추천 보기
             </button>
@@ -652,8 +674,8 @@ export default function Home() {
 
       {step === "pilots" && (
         <section className="mx-auto max-w-7xl px-6 py-16">
-          <h2 className="text-4xl font-black">포트폴리오로 비교하세요</h2>
-          <p className="mt-3 text-gray-500">
+          <h2 className="text-5xl font-black tracking-tight">Explore portfolios</h2>
+          <p className="mt-4 text-neutral-500">
             카드 클릭 시 촬영자의 대표 영상과 PR 정보를 확인할 수 있습니다.
           </p>
 
@@ -662,41 +684,46 @@ export default function Home() {
               <button
                 key={p.id}
                 onClick={() => openPilot(p)}
-                className="group overflow-hidden rounded-[2rem] bg-white text-left shadow-sm transition hover:-translate-y-1 hover:shadow-2xl"
+                className="group overflow-hidden rounded-[2rem] bg-white text-left shadow-sm transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-neutral-200"
               >
-                <img
-                  src={
-                    p.thumbnail_url ||
-                    "https://images.unsplash.com/photo-1506947411487-a56738267384?auto=format&fit=crop&w=1000&q=80"
-                  }
-                  className="h-64 w-full object-cover transition group-hover:scale-105"
-                  alt={p.display_name}
-                />
+                <div className="overflow-hidden">
+                  <img
+                    src={
+                      p.thumbnail_url ||
+                      "https://images.unsplash.com/photo-1506947411487-a56738267384?auto=format&fit=crop&w=1000&q=80"
+                    }
+                    className="h-72 w-full object-cover transition duration-700 group-hover:scale-105"
+                    alt={p.display_name}
+                  />
+                </div>
+
                 <div className="p-6">
                   <div className="flex items-start justify-between">
                     <div>
-                      <h3 className="text-2xl font-black">{p.display_name}</h3>
-                      <p className="mt-1 text-gray-500">{p.region} · {p.experience}</p>
+                      <h3 className="text-2xl font-black tracking-tight">{p.display_name}</h3>
+                      <p className="mt-1 text-sm text-neutral-500">
+                        {p.region} · {p.experience}
+                      </p>
                     </div>
-                    <span className="rounded-full bg-orange-100 px-4 py-2 font-black text-orange-500">
+                    <span className="rounded-full bg-neutral-100 px-4 py-2 text-sm font-black">
                       {p.score}%
                     </span>
                   </div>
 
-                  <p className="mt-4 font-bold">{p.headline}</p>
+                  <p className="mt-4 font-semibold text-neutral-800">{p.headline}</p>
 
                   <div className="mt-4 flex flex-wrap gap-2">
                     {(p.style_tags || []).map((tag) => (
                       <span
                         key={tag}
-                        className="rounded-full bg-[#fff3e8] px-3 py-1 text-xs font-bold text-orange-500"
+                        className="rounded-full bg-neutral-100 px-3 py-1 text-xs font-bold text-neutral-600"
                       >
                         {tag}
                       </span>
                     ))}
                   </div>
 
-                  <p className="mt-5 text-sm text-gray-500">
+                  <p className="mt-5 text-sm text-neutral-500">
                     시작가 {Number(p.price || 0).toLocaleString()}원
                   </p>
                 </div>
@@ -707,18 +734,20 @@ export default function Home() {
       )}
 
       {selectedPilot && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
           <div className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-[2rem] bg-white p-8">
             <button
               onClick={() => setSelectedPilot(null)}
-              className="float-right rounded-full bg-gray-100 px-4 py-2 font-bold"
+              className="float-right rounded-full bg-neutral-100 px-4 py-2 font-bold"
             >
               닫기
             </button>
 
-            <h2 className="text-4xl font-black">{selectedPilot.display_name}</h2>
-            <p className="mt-3 text-xl font-bold text-orange-500">{selectedPilot.headline}</p>
-            <p className="mt-4 leading-7 text-gray-600">{selectedPilot.bio}</p>
+            <h2 className="text-5xl font-black tracking-tight">{selectedPilot.display_name}</h2>
+            <p className="mt-3 text-xl font-semibold text-neutral-500">
+              {selectedPilot.headline}
+            </p>
+            <p className="mt-4 max-w-3xl leading-7 text-neutral-600">{selectedPilot.bio}</p>
 
             <div className="mt-8">
               {selectedPilot.portfolio_url ? (
@@ -728,17 +757,17 @@ export default function Home() {
                   allowFullScreen
                 />
               ) : (
-                <div className="rounded-[2rem] bg-[#fff6ef] p-16 text-center text-gray-500">
+                <div className="rounded-[2rem] bg-neutral-100 p-16 text-center text-neutral-500">
                   대표 영상이 아직 없습니다.
                 </div>
               )}
             </div>
 
-            <h3 className="mt-10 text-2xl font-black">포트폴리오</h3>
+            <h3 className="mt-10 text-2xl font-black">Portfolio</h3>
             <div className="mt-5 grid gap-4 md:grid-cols-3">
               {portfolio.length > 0 ? (
                 portfolio.map((item) => (
-                  <div key={item.id} className="overflow-hidden rounded-2xl bg-[#fbfaf7]">
+                  <div key={item.id} className="overflow-hidden rounded-2xl bg-neutral-50">
                     <img
                       src={
                         item.thumbnail_url ||
@@ -749,16 +778,16 @@ export default function Home() {
                     />
                     <div className="p-4">
                       <p className="font-black">{item.title}</p>
-                      <p className="mt-1 text-sm text-gray-500">{item.category}</p>
+                      <p className="mt-1 text-sm text-neutral-500">{item.category}</p>
                     </div>
                   </div>
                 ))
               ) : (
-                <p className="text-gray-500">등록된 추가 포트폴리오가 없습니다.</p>
+                <p className="text-neutral-500">등록된 추가 포트폴리오가 없습니다.</p>
               )}
             </div>
 
-            <button className="mt-10 w-full rounded-2xl bg-orange-500 p-4 font-black text-white">
+            <button className="mt-10 w-full rounded-full bg-neutral-950 p-4 font-black text-white">
               이 촬영자에게 견적 요청하기
             </button>
           </div>
