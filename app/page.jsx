@@ -1,3 +1,4 @@
+const [step, setStep] = useState("home");
 "use client";
 
 import { useState } from "react";
