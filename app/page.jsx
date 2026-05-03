@@ -11,49 +11,58 @@ const supabase = createClient(
 const fallbackPilots = [
   {
     id: "mock-1",
-    display_name: "Seoul Air Studio",
-    region: "서울",
-    specialties: ["홍보영상", "부동산"],
-    price: 600000,
-    permit_support: true,
-    insured: true,
-    delivery_rate: 98,
-    reshoot_rate: 1.5,
-    experience: "비행 경력 5년",
-    bio: "리조트, 브랜드, 부동산 홍보 촬영 전문입니다.",
-    portfolio_url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    user_id: "mock-1",
+    display_name: "Jeju Air Visual",
+    region: "제주",
+    headline: "리조트·풀빌라 홍보영상 전문",
+    specialties: ["홍보영상", "여행콘텐츠", "부동산"],
+    style_tags: ["시네마틱", "감성적인", "자연광"],
+    price: 750000,
+    delivery_rate: 97,
+    reshoot_rate: 1.8,
+    experience: "비행 경력 6년",
+    bio: "숙박업체와 관광 브랜드를 위한 항공 영상을 제작합니다.",
+    portfolio_url: "https://www.youtube.com/watch?v=ScMzIvxBSi4",
+    thumbnail_url:
+      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1000&q=80",
   },
   {
     id: "mock-2",
-    display_name: "Jeju Drone Film",
-    region: "제주",
-    specialties: ["홍보영상", "여행콘텐츠", "행사"],
-    price: 750000,
-    permit_support: true,
-    insured: true,
-    delivery_rate: 97,
-    reshoot_rate: 1.9,
-    experience: "비행 경력 7년",
-    bio: "관광지, 숙박업소, 야외 행사 항공 영상 촬영 전문입니다.",
-    portfolio_url: "https://www.youtube.com/watch?v=ScMzIvxBSi4",
+    user_id: "mock-2",
+    display_name: "Seoul Skyline Drone",
+    region: "서울",
+    headline: "상업공간·건물 외관 항공 컷 전문",
+    specialties: ["부동산", "홍보영상"],
+    style_tags: ["도시적인", "깔끔한", "브랜드형"],
+    price: 620000,
+    delivery_rate: 98,
+    reshoot_rate: 1.5,
+    experience: "비행 경력 5년",
+    bio: "상업용 건물, 오피스, 모델하우스 촬영을 주로 진행합니다.",
+    portfolio_url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    thumbnail_url:
+      "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1000&q=80",
   },
   {
     id: "mock-3",
-    display_name: "Busan Sky Works",
-    region: "부산",
-    specialties: ["행사", "부동산"],
-    price: 450000,
-    permit_support: false,
-    insured: true,
-    delivery_rate: 93,
-    reshoot_rate: 3.2,
+    user_id: "mock-3",
+    display_name: "Forest Angle Studio",
+    region: "강원",
+    headline: "산악·캠핑·야외 행사 촬영 전문",
+    specialties: ["행사", "여행콘텐츠"],
+    style_tags: ["자연친화적", "다큐멘터리", "역동적인"],
+    price: 500000,
+    delivery_rate: 94,
+    reshoot_rate: 2.7,
     experience: "비행 경력 4년",
-    bio: "행사 스케치와 상업 공간 촬영을 주로 진행합니다.",
+    bio: "아웃도어 브랜드와 야외 행사 스케치 촬영을 진행합니다.",
     portfolio_url: "",
+    thumbnail_url:
+      "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1000&q=80",
   },
 ];
 
-function youtubeEmbedUrl(url) {
+function youtubeEmbed(url) {
   if (!url) return "";
   const match =
     url.match(/youtube\.com\/watch\?v=([^&]+)/) ||
@@ -63,40 +72,30 @@ function youtubeEmbedUrl(url) {
 }
 
 function getMatch(pilot, form) {
-  let score = 0;
+  let score = 20;
   const reasons = [];
 
   if (pilot.region === form.region) {
-    score += 25;
-    reasons.push("촬영 지역 일치");
+    score += 30;
+    reasons.push("촬영 지역이 일치합니다");
   }
 
   if ((pilot.specialties || []).includes(form.purpose)) {
-    score += 25;
-    reasons.push("촬영 목적 전문");
-  }
-
-  if ((form.permitNeed === "필요" || form.permitNeed === "모름") && pilot.permit_support) {
-    score += 20;
-    reasons.push("허가 대행 가능");
-  }
-
-  if (pilot.insured) {
-    score += 15;
-    reasons.push("보험 가입 완료");
+    score += 30;
+    reasons.push("비슷한 촬영 포트폴리오가 있습니다");
   }
 
   if (Number(pilot.delivery_rate) >= 95) {
     score += 10;
-    reasons.push("납기 준수율 우수");
+    reasons.push("납품 만족도가 높습니다");
   }
 
   if (Number(pilot.reshoot_rate) <= 2) {
-    score += 5;
-    reasons.push("재촬영 리스크 낮음");
+    score += 10;
+    reasons.push("재촬영률이 낮습니다");
   }
 
-  return { ...pilot, score, reasons };
+  return { ...pilot, score: Math.min(score, 100), reasons };
 }
 
 export default function Home() {
@@ -104,6 +103,7 @@ export default function Home() {
   const [session, setSession] = useState(null);
   const [pilots, setPilots] = useState(fallbackPilots);
   const [selectedPilot, setSelectedPilot] = useState(null);
+  const [portfolio, setPortfolio] = useState([]);
   const [authMode, setAuthMode] = useState("signup");
   const [role, setRole] = useState("client");
 
@@ -113,34 +113,38 @@ export default function Home() {
     name: "",
   });
 
+  const [requestForm, setRequestForm] = useState({
+    region: "서울",
+    purpose: "홍보영상",
+    detail: "",
+  });
+
   const [pilotForm, setPilotForm] = useState({
     display_name: "",
     region: "서울",
+    headline: "",
     specialtiesText: "홍보영상, 부동산",
+    styleTagsText: "시네마틱, 감성적인",
     price: 500000,
-    permit_support: true,
-    insured: true,
     delivery_rate: 96,
     reshoot_rate: 2.0,
     experience: "",
     bio: "",
     portfolio_url: "",
+    thumbnail_url: "",
+    client_examples: "",
   });
 
-  const [requestForm, setRequestForm] = useState({
-    region: "서울",
-    purpose: "홍보영상",
-    date: "",
-    budget: "70만원 이하",
-    result: "영상",
-    permitNeed: "모름",
-    detail: "",
+  const [workForm, setWorkForm] = useState({
+    title: "",
+    category: "홍보영상",
+    video_url: "",
+    thumbnail_url: "",
+    description: "",
   });
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-    });
+    supabase.auth.getSession().then(({ data }) => setSession(data.session));
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
@@ -148,50 +152,56 @@ export default function Home() {
 
     fetchPilots();
 
-    return () => {
-      listener.subscription.unsubscribe();
-    };
+    return () => listener.subscription.unsubscribe();
   }, []);
 
   async function fetchPilots() {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("pilot_profiles")
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (!error && data && data.length > 0) {
-      setPilots(data);
-    }
+    if (data && data.length > 0) setPilots(data);
   }
 
-  async function handleSignup() {
-    if (!authForm.email || !authForm.password || !authForm.name) {
-      alert("이메일, 비밀번호, 이름을 입력해주세요.");
+  async function fetchPortfolio(userId) {
+    if (!userId || userId.startsWith("mock")) {
+      setPortfolio([]);
       return;
     }
 
+    const { data } = await supabase
+      .from("portfolio_items")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    setPortfolio(data || []);
+  }
+
+  async function openPilot(pilot) {
+    setSelectedPilot(pilot);
+    await fetchPortfolio(pilot.user_id);
+  }
+
+  async function handleSignup() {
     const { data, error } = await supabase.auth.signUp({
       email: authForm.email,
       password: authForm.password,
     });
 
-    if (error) {
-      alert(error.message);
-      return;
-    }
+    if (error) return alert(error.message);
 
-    const userId = data.user?.id;
-    if (userId) {
+    if (data.user?.id) {
       await supabase.from("profiles").insert({
-        id: userId,
+        id: data.user.id,
         role,
         name: authForm.name,
       });
     }
 
-    alert("회원가입 완료. 이메일 인증이 필요한 경우 메일함을 확인해주세요.");
-    if (role === "pilot") setStep("pilotRegister");
-    else setStep("request");
+    alert("가입 완료");
+    setStep(role === "pilot" ? "pilotManage" : "request");
   }
 
   async function handleLogin() {
@@ -200,239 +210,262 @@ export default function Home() {
       password: authForm.password,
     });
 
-    if (error) {
-      alert(error.message);
-      return;
-    }
+    if (error) return alert(error.message);
 
     alert("로그인 완료");
     setStep("home");
   }
 
-  async function handleLogout() {
-    await supabase.auth.signOut();
-    setSession(null);
-    alert("로그아웃되었습니다.");
-  }
-
   async function savePilotProfile() {
-    const user = session?.user;
-
-    if (!user) {
-      alert("촬영자 프로필을 등록하려면 먼저 로그인해야 합니다.");
+    if (!session?.user) {
+      alert("먼저 로그인해주세요.");
       setStep("auth");
       setRole("pilot");
       return;
     }
 
     const payload = {
-      user_id: user.id,
+      user_id: session.user.id,
       display_name: pilotForm.display_name,
       region: pilotForm.region,
-      specialties: pilotForm.specialtiesText.split(",").map((x) => x.trim()).filter(Boolean),
+      headline: pilotForm.headline,
+      specialties: pilotForm.specialtiesText.split(",").map((x) => x.trim()),
+      style_tags: pilotForm.styleTagsText.split(",").map((x) => x.trim()),
       price: Number(pilotForm.price),
-      permit_support: Boolean(pilotForm.permit_support),
-      insured: Boolean(pilotForm.insured),
       delivery_rate: Number(pilotForm.delivery_rate),
       reshoot_rate: Number(pilotForm.reshoot_rate),
       experience: pilotForm.experience,
       bio: pilotForm.bio,
       portfolio_url: pilotForm.portfolio_url,
+      thumbnail_url: pilotForm.thumbnail_url,
+      client_examples: pilotForm.client_examples,
+      permit_support: false,
+      insured: false,
     };
 
-    const { error } = await supabase.from("pilot_profiles").insert(payload);
+    const { error } = await supabase
+      .from("pilot_profiles")
+      .upsert(payload, { onConflict: "user_id" });
 
-    if (error) {
-      alert(error.message);
-      return;
-    }
+    if (error) return alert(error.message);
 
-    alert("촬영자 프로필이 등록되었습니다.");
+    alert("프로필이 저장되었습니다.");
     await fetchPilots();
     setStep("pilots");
   }
 
-  async function submitRequest(pilot) {
-    if (session?.user) {
-      await supabase.from("requests").insert({
-        user_id: session.user.id,
-        region: requestForm.region,
-        purpose: requestForm.purpose,
-        budget: requestForm.budget,
-        desired_date: requestForm.date || null,
-        permit_need: requestForm.permitNeed,
-        detail: requestForm.detail,
-      });
+  async function saveWork() {
+    if (!session?.user) {
+      alert("로그인이 필요합니다.");
+      return;
     }
 
-    setSelectedPilot(pilot);
-    setStep("complete");
+    const { error } = await supabase.from("portfolio_items").insert({
+      user_id: session.user.id,
+      ...workForm,
+    });
+
+    if (error) return alert(error.message);
+
+    alert("포트폴리오가 추가되었습니다.");
+    setWorkForm({
+      title: "",
+      category: "홍보영상",
+      video_url: "",
+      thumbnail_url: "",
+      description: "",
+    });
   }
 
   const matchedPilots = useMemo(() => {
     return pilots
-      .map((pilot) => getMatch(pilot, requestForm))
+      .map((p) => getMatch(p, requestForm))
       .sort((a, b) => b.score - a.score);
   }, [pilots, requestForm]);
 
   return (
-    <main className="min-h-screen bg-[#fffaf6] text-gray-900">
-      <header className="sticky top-0 z-50 border-b border-orange-100 bg-white/90 backdrop-blur">
+    <main className="min-h-screen bg-[#fbfaf7] text-gray-950">
+      <header className="sticky top-0 z-50 border-b bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
-          <button onClick={() => setStep("home")} className="text-xl font-black text-orange-500">
+          <button
+            onClick={() => setStep("home")}
+            className="text-xl font-black text-orange-500"
+          >
             DroneSafeMatch
           </button>
 
           <nav className="hidden gap-8 text-sm font-semibold text-gray-600 md:flex">
             <button onClick={() => setStep("home")}>홈</button>
             <button onClick={() => setStep("request")}>촬영 요청</button>
-            <button onClick={() => setStep("pilots")}>조종자 찾기</button>
-            <button onClick={() => setStep("pilotRegister")}>촬영자로 등록</button>
+            <button onClick={() => setStep("pilots")}>포트폴리오 보기</button>
+            <button onClick={() => setStep("pilotManage")}>촬영자 관리</button>
           </nav>
 
-          <div className="flex gap-3">
-            {session ? (
-              <button onClick={handleLogout} className="rounded-xl border px-4 py-2 text-sm font-bold">
-                로그아웃
-              </button>
-            ) : (
-              <button onClick={() => setStep("auth")} className="rounded-xl border px-4 py-2 text-sm font-bold">
-                로그인 / 회원가입
-              </button>
-            )}
+          {session ? (
             <button
-              onClick={() => setStep("request")}
-              className="rounded-xl bg-orange-500 px-5 py-2 text-sm font-bold text-white shadow-lg shadow-orange-200"
+              onClick={() => supabase.auth.signOut()}
+              className="rounded-full border px-5 py-2 text-sm font-bold"
             >
-              촬영 요청하기
+              로그아웃
             </button>
-          </div>
+          ) : (
+            <button
+              onClick={() => setStep("auth")}
+              className="rounded-full bg-orange-500 px-5 py-2 text-sm font-bold text-white"
+            >
+              로그인 / 가입
+            </button>
+          )}
         </div>
       </header>
 
       {step === "home" && (
-        <section className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-6 py-20 lg:grid-cols-2">
-          <div>
-            <p className="mb-4 text-sm font-bold text-orange-500">
-              허가·보험·납기·재촬영 리스크 기반 매칭
-            </p>
-            <h1 className="text-5xl font-black leading-tight tracking-tight md:text-6xl">
-              드론 촬영,
-              <br />
-              <span className="text-orange-500">검증된 조종자와</span>
-              <br />
-              안전하게 연결하세요
-            </h1>
-            <p className="mt-7 text-lg leading-8 text-gray-600">
-              의뢰자는 촬영 목적과 지역을 입력하고, 촬영자는 포트폴리오를 등록합니다.
-              <br />
-              플랫폼은 허가·보험·납기·재촬영 리스크를 기준으로 조종자를 추천합니다.
-            </p>
+        <>
+          <section className="mx-auto grid max-w-7xl grid-cols-1 gap-12 px-6 py-20 lg:grid-cols-2">
+            <div>
+              <p className="mb-4 font-bold text-orange-500">
+                포트폴리오 기반 드론 촬영 매칭
+              </p>
+              <h1 className="text-5xl font-black leading-tight md:text-6xl">
+                잘 찍는 사람을
+                <br />
+                <span className="text-orange-500">영상으로 확인하고</span>
+                <br />
+                바로 연결하세요
+              </h1>
+              <p className="mt-7 text-lg leading-8 text-gray-600">
+                가격과 평점만 비교하지 않습니다. 실제 포트폴리오, 촬영 스타일,
+                지역 경험을 보고 내 프로젝트에 맞는 촬영자를 선택합니다.
+              </p>
 
-            <div className="mt-9 flex flex-wrap gap-4">
-              <button
-                onClick={() => setStep("auth")}
-                className="rounded-2xl bg-gradient-to-r from-orange-500 to-orange-400 px-7 py-4 font-bold text-white shadow-xl shadow-orange-200"
-              >
-                회원가입 시작하기 →
-              </button>
-              <button
-                onClick={() => setStep("pilots")}
-                className="rounded-2xl border border-orange-200 bg-white px-7 py-4 font-bold text-gray-700 shadow-sm"
-              >
-                조종자 둘러보기
-              </button>
+              <div className="mt-9 flex gap-4">
+                <button
+                  onClick={() => setStep("request")}
+                  className="rounded-2xl bg-orange-500 px-7 py-4 font-black text-white shadow-xl shadow-orange-100"
+                >
+                  촬영 의뢰하기 →
+                </button>
+                <button
+                  onClick={() => setStep("pilotManage")}
+                  className="rounded-2xl border bg-white px-7 py-4 font-black"
+                >
+                  촬영자로 등록하기
+                </button>
+              </div>
             </div>
 
-            <div className="mt-12 grid grid-cols-2 gap-6 sm:grid-cols-4">
-              {[
-                ["허가", "대행 가능 여부"],
-                ["보험", "가입 상태 확인"],
-                ["납기", "준수율 반영"],
-                ["재촬영", "리스크 점수화"],
-              ].map(([title, label]) => (
-                <div key={label}>
-                  <p className="text-2xl font-black text-orange-500">{title}</p>
-                  <p className="mt-1 text-sm text-gray-500">{label}</p>
+            <div className="grid grid-cols-2 gap-4">
+              {fallbackPilots.slice(0, 4).map((p, i) => (
+                <div
+                  key={p.id}
+                  className={`overflow-hidden rounded-[2rem] bg-white shadow-xl ${
+                    i === 0 ? "col-span-2" : ""
+                  }`}
+                >
+                  <img
+                    src={p.thumbnail_url}
+                    className={`w-full object-cover ${i === 0 ? "h-72" : "h-44"}`}
+                    alt={p.display_name}
+                  />
                 </div>
               ))}
             </div>
-          </div>
+          </section>
 
-          <div className="overflow-hidden rounded-[3rem] bg-white p-4 shadow-2xl shadow-orange-100">
-            <img
-              src="https://images.unsplash.com/photo-1506947411487-a56738267384?auto=format&fit=crop&w=1200&q=80"
-              alt="드론 촬영"
-              className="h-[420px] w-full rounded-[2.5rem] object-cover"
-            />
-          </div>
-        </section>
+          <section className="mx-auto max-w-7xl px-6 pb-20">
+            <div className="rounded-[2rem] bg-white p-8 shadow-sm">
+              <p className="font-bold text-orange-500">핵심 방향</p>
+              <h2 className="mt-3 text-3xl font-black">
+                설명보다 결과물로 판단하는 플랫폼
+              </h2>
+              <div className="mt-8 grid gap-5 md:grid-cols-3">
+                {[
+                  ["영상 포트폴리오", "촬영자가 직접 등록한 대표작을 먼저 보여줍니다."],
+                  ["촬영 스타일", "감성적, 시네마틱, 도시적 등 스타일 태그로 비교합니다."],
+                  ["PR 강화", "촬영자가 자신의 강점과 사례를 직접 소개합니다."],
+                ].map(([t, d]) => (
+                  <div key={t} className="rounded-3xl bg-[#fff6ef] p-6">
+                    <h3 className="font-black">{t}</h3>
+                    <p className="mt-3 text-sm leading-6 text-gray-600">{d}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        </>
       )}
 
       {step === "auth" && (
-        <section className="mx-auto max-w-3xl px-6 py-16">
-          <div className="rounded-[2rem] bg-white p-8 shadow-xl shadow-orange-100">
+        <section className="mx-auto max-w-2xl px-6 py-16">
+          <div className="rounded-[2rem] bg-white p-8 shadow-xl">
             <div className="mb-6 flex gap-3">
               <button
                 onClick={() => setAuthMode("signup")}
-                className={`rounded-xl px-5 py-3 font-bold ${authMode === "signup" ? "bg-orange-500 text-white" : "bg-orange-50 text-orange-500"}`}
+                className={`rounded-xl px-5 py-3 font-bold ${
+                  authMode === "signup" ? "bg-orange-500 text-white" : "bg-orange-50"
+                }`}
               >
                 회원가입
               </button>
               <button
                 onClick={() => setAuthMode("login")}
-                className={`rounded-xl px-5 py-3 font-bold ${authMode === "login" ? "bg-orange-500 text-white" : "bg-orange-50 text-orange-500"}`}
+                className={`rounded-xl px-5 py-3 font-bold ${
+                  authMode === "login" ? "bg-orange-500 text-white" : "bg-orange-50"
+                }`}
               >
                 로그인
               </button>
             </div>
 
             {authMode === "signup" && (
-              <div className="mb-6 grid grid-cols-2 gap-4">
+              <div className="mb-5 grid grid-cols-2 gap-4">
                 <button
                   onClick={() => setRole("client")}
-                  className={`rounded-2xl border p-6 text-left ${role === "client" ? "border-orange-400 bg-orange-50" : "border-gray-100"}`}
+                  className={`rounded-2xl border p-5 text-left ${
+                    role === "client" ? "border-orange-400 bg-orange-50" : ""
+                  }`}
                 >
-                  <p className="font-black">의뢰자로 가입</p>
-                  <p className="mt-2 text-sm text-gray-500">드론 촬영을 맡기고 싶어요.</p>
+                  <b>의뢰자</b>
+                  <p className="mt-2 text-sm text-gray-500">촬영을 맡기고 싶어요.</p>
                 </button>
                 <button
                   onClick={() => setRole("pilot")}
-                  className={`rounded-2xl border p-6 text-left ${role === "pilot" ? "border-orange-400 bg-orange-50" : "border-gray-100"}`}
+                  className={`rounded-2xl border p-5 text-left ${
+                    role === "pilot" ? "border-orange-400 bg-orange-50" : ""
+                  }`}
                 >
-                  <p className="font-black">촬영자로 가입</p>
-                  <p className="mt-2 text-sm text-gray-500">내 포트폴리오를 등록하고 싶어요.</p>
+                  <b>촬영자</b>
+                  <p className="mt-2 text-sm text-gray-500">내 포트폴리오를 올리고 싶어요.</p>
                 </button>
               </div>
             )}
 
-            <div className="space-y-4">
-              {authMode === "signup" && (
-                <input
-                  placeholder="이름 또는 업체명"
-                  value={authForm.name}
-                  onChange={(e) => setAuthForm({ ...authForm, name: e.target.value })}
-                  className="w-full rounded-xl border border-orange-100 p-4"
-                />
-              )}
+            {authMode === "signup" && (
               <input
-                placeholder="이메일"
-                value={authForm.email}
-                onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })}
-                className="w-full rounded-xl border border-orange-100 p-4"
+                placeholder="이름 또는 업체명"
+                className="mb-4 w-full rounded-xl border p-4"
+                value={authForm.name}
+                onChange={(e) => setAuthForm({ ...authForm, name: e.target.value })}
               />
-              <input
-                type="password"
-                placeholder="비밀번호"
-                value={authForm.password}
-                onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })}
-                className="w-full rounded-xl border border-orange-100 p-4"
-              />
-            </div>
+            )}
+
+            <input
+              placeholder="이메일"
+              className="mb-4 w-full rounded-xl border p-4"
+              value={authForm.email}
+              onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })}
+            />
+            <input
+              type="password"
+              placeholder="비밀번호"
+              className="mb-4 w-full rounded-xl border p-4"
+              value={authForm.password}
+              onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })}
+            />
 
             <button
               onClick={authMode === "signup" ? handleSignup : handleLogin}
-              className="mt-6 w-full rounded-2xl bg-orange-500 px-7 py-4 font-black text-white shadow-xl shadow-orange-200"
+              className="w-full rounded-2xl bg-orange-500 p-4 font-black text-white"
             >
               {authMode === "signup" ? "가입하기" : "로그인하기"}
             </button>
@@ -440,69 +473,178 @@ export default function Home() {
         </section>
       )}
 
-      {step === "pilotRegister" && (
-        <section className="mx-auto max-w-4xl px-6 py-16">
-          <div className="rounded-[2rem] bg-white p-8 shadow-xl shadow-orange-100">
-            <p className="text-sm font-bold text-orange-500">촬영자 등록</p>
-            <h2 className="mt-2 text-3xl font-black">포트폴리오와 촬영 정보를 등록하세요</h2>
-            <p className="mt-3 text-gray-500">
-              영상 파일 직접 업로드 대신 유튜브 링크를 등록하는 방식입니다.
-            </p>
+      {step === "pilotManage" && (
+        <section className="mx-auto max-w-5xl px-6 py-16">
+          <h2 className="text-4xl font-black">촬영자 프로필 관리</h2>
+          <p className="mt-3 text-gray-500">
+            자기소개, 촬영 스타일, 대표작을 등록해 의뢰자에게 PR하세요.
+          </p>
 
-            <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
-              <input placeholder="업체명 / 활동명" value={pilotForm.display_name} onChange={(e) => setPilotForm({ ...pilotForm, display_name: e.target.value })} className="rounded-xl border border-orange-100 p-4" />
-              <select value={pilotForm.region} onChange={(e) => setPilotForm({ ...pilotForm, region: e.target.value })} className="rounded-xl border border-orange-100 p-4">
-                <option>서울</option><option>경기</option><option>부산</option><option>제주</option><option>대전</option>
-              </select>
-              <input placeholder="전문 분야: 홍보영상, 부동산" value={pilotForm.specialtiesText} onChange={(e) => setPilotForm({ ...pilotForm, specialtiesText: e.target.value })} className="rounded-xl border border-orange-100 p-4" />
-              <input type="number" placeholder="시작 가격" value={pilotForm.price} onChange={(e) => setPilotForm({ ...pilotForm, price: e.target.value })} className="rounded-xl border border-orange-100 p-4" />
-              <input placeholder="경력: 비행 경력 5년" value={pilotForm.experience} onChange={(e) => setPilotForm({ ...pilotForm, experience: e.target.value })} className="rounded-xl border border-orange-100 p-4" />
-              <input placeholder="유튜브 포트폴리오 링크" value={pilotForm.portfolio_url} onChange={(e) => setPilotForm({ ...pilotForm, portfolio_url: e.target.value })} className="rounded-xl border border-orange-100 p-4" />
+          <div className="mt-8 grid gap-6 lg:grid-cols-2">
+            <div className="rounded-[2rem] bg-white p-8 shadow-sm">
+              <h3 className="text-2xl font-black">프로필 수정</h3>
+
+              <div className="mt-6 grid gap-4">
+                <input
+                  placeholder="업체명 / 활동명"
+                  className="rounded-xl border p-4"
+                  value={pilotForm.display_name}
+                  onChange={(e) =>
+                    setPilotForm({ ...pilotForm, display_name: e.target.value })
+                  }
+                />
+                <input
+                  placeholder="한 줄 PR: 리조트·풀빌라 홍보영상 전문"
+                  className="rounded-xl border p-4"
+                  value={pilotForm.headline}
+                  onChange={(e) => setPilotForm({ ...pilotForm, headline: e.target.value })}
+                />
+                <select
+                  className="rounded-xl border p-4"
+                  value={pilotForm.region}
+                  onChange={(e) => setPilotForm({ ...pilotForm, region: e.target.value })}
+                >
+                  <option>서울</option>
+                  <option>경기</option>
+                  <option>부산</option>
+                  <option>제주</option>
+                  <option>강원</option>
+                  <option>대전</option>
+                </select>
+                <input
+                  placeholder="전문 분야: 홍보영상, 부동산, 행사"
+                  className="rounded-xl border p-4"
+                  value={pilotForm.specialtiesText}
+                  onChange={(e) =>
+                    setPilotForm({ ...pilotForm, specialtiesText: e.target.value })
+                  }
+                />
+                <input
+                  placeholder="촬영 스타일: 시네마틱, 감성적인, 도시적인"
+                  className="rounded-xl border p-4"
+                  value={pilotForm.styleTagsText}
+                  onChange={(e) =>
+                    setPilotForm({ ...pilotForm, styleTagsText: e.target.value })
+                  }
+                />
+                <input
+                  placeholder="썸네일 이미지 URL"
+                  className="rounded-xl border p-4"
+                  value={pilotForm.thumbnail_url}
+                  onChange={(e) =>
+                    setPilotForm({ ...pilotForm, thumbnail_url: e.target.value })
+                  }
+                />
+                <textarea
+                  placeholder="자기소개"
+                  className="h-28 rounded-xl border p-4"
+                  value={pilotForm.bio}
+                  onChange={(e) => setPilotForm({ ...pilotForm, bio: e.target.value })}
+                />
+              </div>
+
+              <button
+                onClick={savePilotProfile}
+                className="mt-6 w-full rounded-2xl bg-orange-500 p-4 font-black text-white"
+              >
+                프로필 저장 / 수정
+              </button>
             </div>
 
-            <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
-              <label className="rounded-xl bg-orange-50 p-4 font-bold">
-                <input type="checkbox" checked={pilotForm.permit_support} onChange={(e) => setPilotForm({ ...pilotForm, permit_support: e.target.checked })} className="mr-2" />
-                허가 대행 가능
-              </label>
-              <label className="rounded-xl bg-orange-50 p-4 font-bold">
-                <input type="checkbox" checked={pilotForm.insured} onChange={(e) => setPilotForm({ ...pilotForm, insured: e.target.checked })} className="mr-2" />
-                보험 가입 완료
-              </label>
+            <div className="rounded-[2rem] bg-white p-8 shadow-sm">
+              <h3 className="text-2xl font-black">포트폴리오 추가</h3>
+
+              <div className="mt-6 grid gap-4">
+                <input
+                  placeholder="영상 제목"
+                  className="rounded-xl border p-4"
+                  value={workForm.title}
+                  onChange={(e) => setWorkForm({ ...workForm, title: e.target.value })}
+                />
+                <input
+                  placeholder="유튜브 영상 링크"
+                  className="rounded-xl border p-4"
+                  value={workForm.video_url}
+                  onChange={(e) => setWorkForm({ ...workForm, video_url: e.target.value })}
+                />
+                <input
+                  placeholder="썸네일 이미지 URL"
+                  className="rounded-xl border p-4"
+                  value={workForm.thumbnail_url}
+                  onChange={(e) =>
+                    setWorkForm({ ...workForm, thumbnail_url: e.target.value })
+                  }
+                />
+                <select
+                  className="rounded-xl border p-4"
+                  value={workForm.category}
+                  onChange={(e) => setWorkForm({ ...workForm, category: e.target.value })}
+                >
+                  <option>홍보영상</option>
+                  <option>부동산</option>
+                  <option>행사</option>
+                  <option>여행콘텐츠</option>
+                </select>
+                <textarea
+                  placeholder="작품 설명"
+                  className="h-24 rounded-xl border p-4"
+                  value={workForm.description}
+                  onChange={(e) =>
+                    setWorkForm({ ...workForm, description: e.target.value })
+                  }
+                />
+              </div>
+
+              <button
+                onClick={saveWork}
+                className="mt-6 w-full rounded-2xl bg-black p-4 font-black text-white"
+              >
+                포트폴리오 등록
+              </button>
             </div>
-
-            <textarea placeholder="자기소개 / 촬영 스타일" value={pilotForm.bio} onChange={(e) => setPilotForm({ ...pilotForm, bio: e.target.value })} className="mt-5 h-28 w-full rounded-xl border border-orange-100 p-4" />
-
-            <button onClick={savePilotProfile} className="mt-8 w-full rounded-2xl bg-orange-500 px-7 py-4 font-black text-white shadow-xl shadow-orange-200">
-              촬영자 프로필 등록하기
-            </button>
           </div>
         </section>
       )}
 
       {step === "request" && (
-        <section className="mx-auto max-w-4xl px-6 py-16">
-          <div className="rounded-[2rem] bg-white p-8 shadow-xl shadow-orange-100">
-            <p className="text-sm font-bold text-orange-500">촬영 요청</p>
-            <h2 className="mt-2 text-3xl font-black">촬영 조건을 입력하세요</h2>
-
-            <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
-              <select value={requestForm.region} onChange={(e) => setRequestForm({ ...requestForm, region: e.target.value })} className="rounded-xl border border-orange-100 p-4">
-                <option>서울</option><option>경기</option><option>부산</option><option>제주</option><option>대전</option>
+        <section className="mx-auto max-w-3xl px-6 py-16">
+          <div className="rounded-[2rem] bg-white p-8 shadow-sm">
+            <h2 className="text-3xl font-black">촬영 요청</h2>
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              <select
+                className="rounded-xl border p-4"
+                value={requestForm.region}
+                onChange={(e) => setRequestForm({ ...requestForm, region: e.target.value })}
+              >
+                <option>서울</option>
+                <option>경기</option>
+                <option>부산</option>
+                <option>제주</option>
+                <option>강원</option>
+                <option>대전</option>
               </select>
-              <select value={requestForm.purpose} onChange={(e) => setRequestForm({ ...requestForm, purpose: e.target.value })} className="rounded-xl border border-orange-100 p-4">
-                <option>홍보영상</option><option>부동산</option><option>행사</option><option>점검촬영</option><option>여행콘텐츠</option>
-              </select>
-              <input type="date" value={requestForm.date} onChange={(e) => setRequestForm({ ...requestForm, date: e.target.value })} className="rounded-xl border border-orange-100 p-4" />
-              <select value={requestForm.permitNeed} onChange={(e) => setRequestForm({ ...requestForm, permitNeed: e.target.value })} className="rounded-xl border border-orange-100 p-4">
-                <option>모름</option><option>필요</option><option>불필요</option>
+              <select
+                className="rounded-xl border p-4"
+                value={requestForm.purpose}
+                onChange={(e) => setRequestForm({ ...requestForm, purpose: e.target.value })}
+              >
+                <option>홍보영상</option>
+                <option>부동산</option>
+                <option>행사</option>
+                <option>여행콘텐츠</option>
               </select>
             </div>
-
-            <textarea placeholder="상세 요청사항" value={requestForm.detail} onChange={(e) => setRequestForm({ ...requestForm, detail: e.target.value })} className="mt-5 h-28 w-full rounded-xl border border-orange-100 p-4" />
-
-            <button onClick={() => setStep("pilots")} className="mt-8 w-full rounded-2xl bg-orange-500 px-7 py-4 font-black text-white shadow-xl shadow-orange-200">
-              조건에 맞는 조종자 추천받기 →
+            <textarea
+              placeholder="상세 요청사항"
+              className="mt-4 h-28 w-full rounded-xl border p-4"
+              value={requestForm.detail}
+              onChange={(e) => setRequestForm({ ...requestForm, detail: e.target.value })}
+            />
+            <button
+              onClick={() => setStep("pilots")}
+              className="mt-6 w-full rounded-2xl bg-orange-500 p-4 font-black text-white"
+            >
+              포트폴리오 기반 추천 보기
             </button>
           </div>
         </section>
@@ -510,83 +652,117 @@ export default function Home() {
 
       {step === "pilots" && (
         <section className="mx-auto max-w-7xl px-6 py-16">
-          <h2 className="text-3xl font-black">추천 조종자</h2>
-          <p className="mt-3 text-gray-500">프로필을 클릭하면 포트폴리오 영상을 볼 수 있습니다.</p>
+          <h2 className="text-4xl font-black">포트폴리오로 비교하세요</h2>
+          <p className="mt-3 text-gray-500">
+            카드 클릭 시 촬영자의 대표 영상과 PR 정보를 확인할 수 있습니다.
+          </p>
 
-          <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {matchedPilots.map((pilot) => (
-              <div key={pilot.id} className="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-black">{pilot.display_name}</h3>
-                  <span className="rounded-full bg-orange-100 px-3 py-1 text-sm font-black text-orange-500">{pilot.score}%</span>
-                </div>
-                <p className="mt-2 text-sm text-gray-500">{pilot.region} · {pilot.experience}</p>
-                <p className="mt-3 text-sm text-gray-600">시작가 {Number(pilot.price || 0).toLocaleString()}원</p>
+          <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {matchedPilots.map((p) => (
+              <button
+                key={p.id}
+                onClick={() => openPilot(p)}
+                className="group overflow-hidden rounded-[2rem] bg-white text-left shadow-sm transition hover:-translate-y-1 hover:shadow-2xl"
+              >
+                <img
+                  src={
+                    p.thumbnail_url ||
+                    "https://images.unsplash.com/photo-1506947411487-a56738267384?auto=format&fit=crop&w=1000&q=80"
+                  }
+                  className="h-64 w-full object-cover transition group-hover:scale-105"
+                  alt={p.display_name}
+                />
+                <div className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-2xl font-black">{p.display_name}</h3>
+                      <p className="mt-1 text-gray-500">{p.region} · {p.experience}</p>
+                    </div>
+                    <span className="rounded-full bg-orange-100 px-4 py-2 font-black text-orange-500">
+                      {p.score}%
+                    </span>
+                  </div>
 
-                <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-                  <span className="rounded-full bg-orange-50 px-3 py-2 text-center font-bold text-orange-500">{pilot.permit_support ? "허가 대행 가능" : "허가 미지원"}</span>
-                  <span className="rounded-full bg-orange-50 px-3 py-2 text-center font-bold text-orange-500">{pilot.insured ? "보험 가입" : "보험 미확인"}</span>
-                  <span className="rounded-full bg-gray-50 px-3 py-2 text-center font-bold text-gray-600">납기 {pilot.delivery_rate}%</span>
-                  <span className="rounded-full bg-gray-50 px-3 py-2 text-center font-bold text-gray-600">재촬영 {pilot.reshoot_rate}%</span>
-                </div>
+                  <p className="mt-4 font-bold">{p.headline}</p>
 
-                <div className="mt-5 text-sm text-gray-500">
-                  {(pilot.reasons || []).map((r) => <p key={r}>✔ {r}</p>)}
-                </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {(p.style_tags || []).map((tag) => (
+                      <span
+                        key={tag}
+                        className="rounded-full bg-[#fff3e8] px-3 py-1 text-xs font-bold text-orange-500"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
 
-                <div className="mt-6 flex gap-3">
-                  <button onClick={() => setSelectedPilot(pilot)} className="flex-1 rounded-xl border border-orange-200 px-4 py-3 font-bold text-orange-500">
-                    프로필 보기
-                  </button>
-                  <button onClick={() => submitRequest(pilot)} className="flex-1 rounded-xl bg-orange-500 px-4 py-3 font-bold text-white">
-                    견적 요청
-                  </button>
+                  <p className="mt-5 text-sm text-gray-500">
+                    시작가 {Number(p.price || 0).toLocaleString()}원
+                  </p>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </section>
       )}
 
-      {selectedPilot && step !== "complete" && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4">
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[2rem] bg-white p-8">
-            <button onClick={() => setSelectedPilot(null)} className="float-right text-gray-400">닫기</button>
-            <h2 className="text-3xl font-black">{selectedPilot.display_name}</h2>
-            <p className="mt-3 text-gray-500">{selectedPilot.bio}</p>
+      {selectedPilot && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
+          <div className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-[2rem] bg-white p-8">
+            <button
+              onClick={() => setSelectedPilot(null)}
+              className="float-right rounded-full bg-gray-100 px-4 py-2 font-bold"
+            >
+              닫기
+            </button>
 
-            {selectedPilot.portfolio_url ? (
-              <iframe
-                src={youtubeEmbedUrl(selectedPilot.portfolio_url)}
-                className="mt-6 h-80 w-full rounded-2xl"
-                allowFullScreen
-              />
-            ) : (
-              <div className="mt-6 rounded-2xl bg-orange-50 p-10 text-center text-gray-500">
-                등록된 포트폴리오 영상이 없습니다.
-              </div>
-            )}
+            <h2 className="text-4xl font-black">{selectedPilot.display_name}</h2>
+            <p className="mt-3 text-xl font-bold text-orange-500">{selectedPilot.headline}</p>
+            <p className="mt-4 leading-7 text-gray-600">{selectedPilot.bio}</p>
 
-            <button onClick={() => submitRequest(selectedPilot)} className="mt-6 w-full rounded-xl bg-orange-500 px-4 py-3 font-black text-white">
-              이 조종자에게 견적 요청하기
+            <div className="mt-8">
+              {selectedPilot.portfolio_url ? (
+                <iframe
+                  src={youtubeEmbed(selectedPilot.portfolio_url)}
+                  className="h-[420px] w-full rounded-[2rem]"
+                  allowFullScreen
+                />
+              ) : (
+                <div className="rounded-[2rem] bg-[#fff6ef] p-16 text-center text-gray-500">
+                  대표 영상이 아직 없습니다.
+                </div>
+              )}
+            </div>
+
+            <h3 className="mt-10 text-2xl font-black">포트폴리오</h3>
+            <div className="mt-5 grid gap-4 md:grid-cols-3">
+              {portfolio.length > 0 ? (
+                portfolio.map((item) => (
+                  <div key={item.id} className="overflow-hidden rounded-2xl bg-[#fbfaf7]">
+                    <img
+                      src={
+                        item.thumbnail_url ||
+                        "https://images.unsplash.com/photo-1506947411487-a56738267384?auto=format&fit=crop&w=1000&q=80"
+                      }
+                      className="h-40 w-full object-cover"
+                      alt={item.title}
+                    />
+                    <div className="p-4">
+                      <p className="font-black">{item.title}</p>
+                      <p className="mt-1 text-sm text-gray-500">{item.category}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500">등록된 추가 포트폴리오가 없습니다.</p>
+              )}
+            </div>
+
+            <button className="mt-10 w-full rounded-2xl bg-orange-500 p-4 font-black text-white">
+              이 촬영자에게 견적 요청하기
             </button>
           </div>
         </div>
-      )}
-
-      {step === "complete" && (
-        <section className="mx-auto max-w-3xl px-6 py-20">
-          <div className="rounded-[2rem] bg-white p-10 text-center shadow-xl shadow-orange-100">
-            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-orange-100 text-4xl">✓</div>
-            <h2 className="text-3xl font-black">견적 요청이 접수되었습니다</h2>
-            <p className="mt-5 leading-7 text-gray-500">
-              {selectedPilot?.display_name} 조종자에게 요청 내용이 전달되었습니다.
-            </p>
-            <button onClick={() => setStep("home")} className="mt-8 rounded-xl bg-orange-500 px-6 py-3 font-bold text-white">
-              홈으로
-            </button>
-          </div>
-        </section>
       )}
     </main>
   );
