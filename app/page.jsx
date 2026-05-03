@@ -21,10 +21,12 @@ const DEFAULT_AVATAR =
 const fallbackRequests = [
   {
     id: "req-1",
+    user_id: "mock",
     title: "제주 리조트 홍보 영상 촬영",
     client_type: "기업/브랜드",
     region: "제주",
     location_detail: "제주 서귀포시",
+    purpose: "홍보영상",
     budget: "150만원 ~ 250만원",
     deadline: "2026-05-20",
     tags: ["홍보 영상", "리조트", "4K", "편집 포함"],
@@ -35,10 +37,12 @@ const fallbackRequests = [
   },
   {
     id: "req-2",
+    user_id: "mock",
     title: "서울 도심 오피스 빌딩 촬영",
     client_type: "부동산/건설",
     region: "서울",
     location_detail: "서울 강남구",
+    purpose: "부동산",
     budget: "120만원 ~ 200만원",
     deadline: "2026-05-28",
     tags: ["건축 촬영", "매물 홍보", "사진+영상"],
@@ -49,10 +53,12 @@ const fallbackRequests = [
   },
   {
     id: "req-3",
+    user_id: "mock",
     title: "여수 관광지 홍보 영상 제작",
     client_type: "공공기관",
     region: "전남",
     location_detail: "전라남도 여수시",
+    purpose: "여행콘텐츠",
     budget: "200만원 ~ 300만원",
     deadline: "2026-05-18",
     tags: ["관광 홍보", "영상 제작", "하이라이트"],
@@ -63,24 +69,27 @@ const fallbackRequests = [
   },
   {
     id: "req-4",
+    user_id: "mock",
     title: "설악산 국립공원 자연 영상 촬영",
     client_type: "공공기관",
     region: "강원",
     location_detail: "강원도 속초시",
+    purpose: "여행콘텐츠",
     budget: "180만원 ~ 280만원",
     deadline: "2026-06-05",
     tags: ["자연 영상", "산악", "풍경"],
     thumbnail_url:
       "https://images.unsplash.com/photo-1508264165352-258a6c2cf578?auto=format&fit=crop&w=1000&q=80",
-    description:
-      "산악 경관과 자연 분위기를 담은 영상 콘텐츠 제작 의뢰입니다.",
+    description: "산악 경관과 자연 분위기를 담은 영상 콘텐츠 제작 의뢰입니다.",
   },
   {
     id: "req-5",
+    user_id: "mock",
     title: "공장 및 시설 항공 촬영",
     client_type: "기업/브랜드",
     region: "경기",
     location_detail: "경기도 화성시",
+    purpose: "시설촬영",
     budget: "160만원 ~ 220만원",
     deadline: "2026-06-02",
     tags: ["시설 촬영", "공장", "항공 사진"],
@@ -157,6 +166,16 @@ function youtubeEmbed(url) {
   return match ? `https://www.youtube.com/embed/${match[1]}` : url;
 }
 
+function daysLeft(dateText) {
+  if (!dateText) return "";
+  const target = new Date(dateText);
+  const today = new Date();
+  const diff = Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+  if (Number.isNaN(diff)) return "";
+  if (diff < 0) return "마감";
+  return `D-${diff}`;
+}
+
 function getMatch(pilot, form) {
   let score = 25;
   const reasons = [];
@@ -184,24 +203,50 @@ function getMatch(pilot, form) {
   return { ...pilot, score: Math.min(score, 100), reasons };
 }
 
-function daysLeft(dateText) {
-  if (!dateText) return "";
-  const target = new Date(dateText);
-  const today = new Date();
-  const diff = Math.ceil((target - today) / (1000 * 60 * 60 * 24));
-  if (Number.isNaN(diff)) return "";
-  if (diff < 0) return "마감";
-  return `D-${diff}`;
-}
+const emptyRequestForm = {
+  title: "",
+  client_type: "기업/브랜드",
+  region: "서울",
+  location_detail: "",
+  purpose: "홍보영상",
+  budget: "100만원 ~ 200만원",
+  deadline: "",
+  thumbnail_url: "",
+  tagsText: "홍보 영상, 4K",
+  description: "",
+};
+
+const emptyPilotForm = {
+  display_name: "",
+  region: "서울",
+  headline: "",
+  specialtiesText: "홍보영상, 부동산",
+  styleTagsText: "Cinematic, Clean",
+  price: 500000,
+  delivery_rate: 96,
+  reshoot_rate: 2.0,
+  experience: "",
+  bio: "",
+  portfolio_url: "",
+  thumbnail_url: "",
+  avatar_url: "",
+  client_examples: "",
+};
 
 export default function Home() {
   const [step, setStep] = useState("home");
   const [session, setSession] = useState(null);
+
   const [pilots, setPilots] = useState(fallbackPilots);
   const [requests, setRequests] = useState(fallbackRequests);
+  const [myRequests, setMyRequests] = useState([]);
+  const [myPilotProfile, setMyPilotProfile] = useState(null);
+  const [myPortfolio, setMyPortfolio] = useState([]);
+
   const [selectedPilot, setSelectedPilot] = useState(null);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [portfolio, setPortfolio] = useState([]);
+
   const [authMode, setAuthMode] = useState("signup");
   const [role, setRole] = useState("client");
 
@@ -211,35 +256,10 @@ export default function Home() {
     name: "",
   });
 
-  const [requestForm, setRequestForm] = useState({
-    title: "",
-    client_type: "기업/브랜드",
-    region: "서울",
-    location_detail: "",
-    purpose: "홍보영상",
-    budget: "100만원 ~ 200만원",
-    deadline: "",
-    thumbnail_url: "",
-    tagsText: "홍보 영상, 4K",
-    description: "",
-  });
+  const [requestForm, setRequestForm] = useState(emptyRequestForm);
+  const [editingRequestId, setEditingRequestId] = useState(null);
 
-  const [pilotForm, setPilotForm] = useState({
-    display_name: "",
-    region: "서울",
-    headline: "",
-    specialtiesText: "홍보영상, 부동산",
-    styleTagsText: "Cinematic, Clean",
-    price: 500000,
-    delivery_rate: 96,
-    reshoot_rate: 2.0,
-    experience: "",
-    bio: "",
-    portfolio_url: "",
-    thumbnail_url: "",
-    avatar_url: "",
-    client_examples: "",
-  });
+  const [pilotForm, setPilotForm] = useState(emptyPilotForm);
 
   const [workForm, setWorkForm] = useState({
     title: "",
@@ -250,10 +270,22 @@ export default function Home() {
   });
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      if (data.session?.user) {
+        fetchMyPage(data.session.user.id);
+      }
+    });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (session?.user) {
+        fetchMyPage(session.user.id);
+      } else {
+        setMyRequests([]);
+        setMyPilotProfile(null);
+        setMyPortfolio([]);
+      }
     });
 
     fetchPilots();
@@ -270,6 +302,8 @@ export default function Home() {
 
     if (data && data.length > 0) {
       setPilots([...data, ...fallbackPilots]);
+    } else {
+      setPilots(fallbackPilots);
     }
   }
 
@@ -284,6 +318,51 @@ export default function Home() {
     } else {
       setRequests(fallbackRequests);
     }
+  }
+
+  async function fetchMyPage(userId) {
+    const { data: reqs } = await supabase
+      .from("requests")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    setMyRequests(reqs || []);
+
+    const { data: profile } = await supabase
+      .from("pilot_profiles")
+      .select("*")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    setMyPilotProfile(profile || null);
+
+    if (profile) {
+      setPilotForm({
+        display_name: profile.display_name || "",
+        region: profile.region || "서울",
+        headline: profile.headline || "",
+        specialtiesText: (profile.specialties || []).join(", "),
+        styleTagsText: (profile.style_tags || []).join(", "),
+        price: profile.price || 500000,
+        delivery_rate: profile.delivery_rate || 96,
+        reshoot_rate: profile.reshoot_rate || 2.0,
+        experience: profile.experience || "",
+        bio: profile.bio || "",
+        portfolio_url: profile.portfolio_url || "",
+        thumbnail_url: profile.thumbnail_url || "",
+        avatar_url: profile.avatar_url || "",
+        client_examples: profile.client_examples || "",
+      });
+    }
+
+    const { data: works } = await supabase
+      .from("portfolio_items")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    setMyPortfolio(works || []);
   }
 
   async function fetchPortfolio(userId) {
@@ -331,6 +410,11 @@ export default function Home() {
   }
 
   async function handleSignup() {
+    if (!authForm.email || !authForm.password || !authForm.name) {
+      alert("이름, 이메일, 비밀번호를 입력해주세요.");
+      return;
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email: authForm.email,
       password: authForm.password,
@@ -347,7 +431,7 @@ export default function Home() {
     }
 
     alert("가입 완료");
-    setStep(role === "pilot" ? "pilotManage" : "requestCreate");
+    setStep("myPage");
   }
 
   async function handleLogin() {
@@ -359,7 +443,7 @@ export default function Home() {
     if (error) return alert(error.message);
 
     alert("로그인 완료");
-    setStep("home");
+    setStep("myPage");
   }
 
   async function savePilotProfile() {
@@ -398,12 +482,18 @@ export default function Home() {
 
     alert("프로필이 저장되었습니다.");
     await fetchPilots();
-    setStep("pilots");
+    await fetchMyPage(session.user.id);
+    setStep("myPage");
   }
 
   async function saveWork() {
     if (!session?.user) {
       alert("로그인이 필요합니다.");
+      return;
+    }
+
+    if (!workForm.title) {
+      alert("영상 제목을 입력해주세요.");
       return;
     }
 
@@ -422,6 +512,36 @@ export default function Home() {
       thumbnail_url: "",
       description: "",
     });
+
+    await fetchMyPage(session.user.id);
+  }
+
+  function startNewRequest() {
+    setEditingRequestId(null);
+    setRequestForm(emptyRequestForm);
+    setStep("requestCreate");
+  }
+
+  function startEditRequest(req) {
+    if (!session?.user || req.user_id !== session.user.id) {
+      alert("내가 작성한 의뢰만 수정할 수 있습니다.");
+      return;
+    }
+
+    setEditingRequestId(req.id);
+    setRequestForm({
+      title: req.title || "",
+      client_type: req.client_type || "기업/브랜드",
+      region: req.region || "서울",
+      location_detail: req.location_detail || "",
+      purpose: req.purpose || "홍보영상",
+      budget: req.budget || "100만원 ~ 200만원",
+      deadline: req.deadline || "",
+      thumbnail_url: req.thumbnail_url || "",
+      tagsText: (req.tags || []).join(", "),
+      description: req.description || "",
+    });
+    setStep("requestCreate");
   }
 
   async function saveRequest() {
@@ -446,13 +566,49 @@ export default function Home() {
       description: requestForm.description,
     };
 
-    const { error } = await supabase.from("requests").insert(payload);
+    if (editingRequestId) {
+      const { error } = await supabase
+        .from("requests")
+        .update(payload)
+        .eq("id", editingRequestId)
+        .eq("user_id", session.user.id);
+
+      if (error) return alert(error.message);
+
+      alert("의뢰가 수정되었습니다.");
+    } else {
+      const { error } = await supabase.from("requests").insert(payload);
+
+      if (error) return alert(error.message);
+
+      alert("의뢰가 등록되었습니다.");
+    }
+
+    setEditingRequestId(null);
+    setRequestForm(emptyRequestForm);
+
+    await fetchRequests();
+    await fetchMyPage(session.user.id);
+    setStep("myPage");
+  }
+
+  async function deleteRequest(reqId) {
+    if (!session?.user) return;
+
+    const ok = confirm("이 의뢰를 삭제할까요?");
+    if (!ok) return;
+
+    const { error } = await supabase
+      .from("requests")
+      .delete()
+      .eq("id", reqId)
+      .eq("user_id", session.user.id);
 
     if (error) return alert(error.message);
 
-    alert("의뢰가 등록되었습니다.");
+    alert("삭제되었습니다.");
     await fetchRequests();
-    setStep("requests");
+    await fetchMyPage(session.user.id);
   }
 
   const matchedPilots = useMemo(() => {
@@ -488,12 +644,17 @@ export default function Home() {
             <button onClick={() => setStep("requests")} className="hover:text-neutral-950">
               Requests
             </button>
-            <button onClick={() => setStep("requestCreate")} className="hover:text-neutral-950">
+            <button onClick={startNewRequest} className="hover:text-neutral-950">
               Post request
             </button>
             <button onClick={() => setStep("pilotManage")} className="hover:text-neutral-950">
               Creator Studio
             </button>
+            {session && (
+              <button onClick={() => setStep("myPage")} className="hover:text-neutral-950">
+                My Page
+              </button>
+            )}
           </nav>
 
           {session ? (
@@ -536,7 +697,7 @@ export default function Home() {
               </p>
 
               <div className="mt-10 flex flex-wrap gap-4">
-                <button onClick={() => setStep("requestCreate")} className={primaryButton}>
+                <button onClick={startNewRequest} className={primaryButton}>
                   의뢰 등록하기
                 </button>
                 <button onClick={() => setStep("pilots")} className={secondaryButton}>
@@ -569,21 +730,6 @@ export default function Home() {
                   alt="forest"
                 />
               </div>
-            </div>
-          </section>
-
-          <section className="mx-auto max-w-7xl px-6 pb-20">
-            <div className="grid gap-5 md:grid-cols-3">
-              {[
-                ["Post request", "의뢰자가 필요한 촬영 조건을 카드 형태로 등록합니다."],
-                ["Apply with portfolio", "촬영자는 본인의 실제 작업물로 의뢰에 지원합니다."],
-                ["Choose by work", "의뢰자는 가격보다 결과물과 스타일을 보고 선택합니다."],
-              ].map(([title, desc]) => (
-                <div key={title} className="rounded-[2rem] bg-white p-7 shadow-sm">
-                  <h3 className="text-xl font-black">{title}</h3>
-                  <p className="mt-4 text-sm leading-6 text-neutral-500">{desc}</p>
-                </div>
-              ))}
             </div>
           </section>
         </>
@@ -667,11 +813,156 @@ export default function Home() {
         </section>
       )}
 
+      {step === "myPage" && (
+        <section className="mx-auto max-w-7xl px-6 py-16">
+          <div className="flex flex-wrap items-end justify-between gap-5">
+            <div>
+              <p className="text-sm font-bold uppercase tracking-[0.25em] text-neutral-400">
+                My workspace
+              </p>
+              <h2 className="mt-4 text-5xl font-black tracking-tight">내 페이지</h2>
+              <p className="mt-4 text-neutral-500">
+                내가 올린 의뢰, 촬영자 프로필, 포트폴리오를 한 곳에서 관리합니다.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={startNewRequest} className={primaryButton}>
+                새 의뢰 등록
+              </button>
+              <button onClick={() => setStep("pilotManage")} className={secondaryButton}>
+                내 프로필 수정
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-10 grid gap-6 lg:grid-cols-3">
+            <div className="rounded-[2rem] bg-white p-7 shadow-sm">
+              <h3 className="text-xl font-black">계정</h3>
+              <p className="mt-4 text-sm text-neutral-500">로그인 이메일</p>
+              <p className="mt-2 font-bold">{session?.user?.email}</p>
+            </div>
+
+            <div className="rounded-[2rem] bg-white p-7 shadow-sm">
+              <h3 className="text-xl font-black">내 의뢰</h3>
+              <p className="mt-4 text-4xl font-black">{myRequests.length}</p>
+              <p className="mt-2 text-sm text-neutral-500">등록한 촬영 의뢰</p>
+            </div>
+
+            <div className="rounded-[2rem] bg-white p-7 shadow-sm">
+              <h3 className="text-xl font-black">내 포트폴리오</h3>
+              <p className="mt-4 text-4xl font-black">{myPortfolio.length}</p>
+              <p className="mt-2 text-sm text-neutral-500">등록한 작업물</p>
+            </div>
+          </div>
+
+          <div className="mt-8 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+            <div className="rounded-[2rem] bg-white p-8 shadow-sm">
+              <h3 className="text-2xl font-black">내 촬영자 프로필</h3>
+
+              {myPilotProfile ? (
+                <div className="mt-6">
+                  <div className="flex items-center gap-5">
+                    <img
+                      src={myPilotProfile.avatar_url || DEFAULT_AVATAR}
+                      className="h-24 w-24 rounded-full object-cover"
+                      alt="avatar"
+                    />
+                    <div>
+                      <p className="text-2xl font-black">{myPilotProfile.display_name}</p>
+                      <p className="mt-1 text-neutral-500">{myPilotProfile.region}</p>
+                      <p className="mt-2 font-semibold">{myPilotProfile.headline}</p>
+                    </div>
+                  </div>
+
+                  <p className="mt-6 text-sm leading-6 text-neutral-600">
+                    {myPilotProfile.bio || "자기소개가 아직 없습니다."}
+                  </p>
+
+                  <button
+                    onClick={() => setStep("pilotManage")}
+                    className="mt-6 w-full rounded-full bg-neutral-950 p-4 font-black text-white"
+                  >
+                    내 프로필 수정하기
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-6 rounded-2xl bg-neutral-50 p-6">
+                  <p className="font-bold">아직 촬영자 프로필이 없습니다.</p>
+                  <p className="mt-2 text-sm text-neutral-500">
+                    프로필을 만들면 포트폴리오 목록에 노출됩니다.
+                  </p>
+                  <button
+                    onClick={() => setStep("pilotManage")}
+                    className="mt-5 rounded-full bg-neutral-950 px-6 py-3 font-bold text-white"
+                  >
+                    촬영자 프로필 만들기
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-[2rem] bg-white p-8 shadow-sm">
+              <div className="flex items-center justify-between">
+                <h3 className="text-2xl font-black">내가 올린 의뢰</h3>
+                <button onClick={startNewRequest} className="rounded-full border px-5 py-2 text-sm font-bold">
+                  새 글
+                </button>
+              </div>
+
+              <div className="mt-6 space-y-4">
+                {myRequests.length > 0 ? (
+                  myRequests.map((req) => (
+                    <div key={req.id} className="rounded-2xl border border-neutral-200 p-5">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="text-xl font-black">{req.title || "제목 없는 의뢰"}</p>
+                          <p className="mt-2 text-sm text-neutral-500">
+                            {req.region} · {req.budget} · {daysLeft(req.deadline)}
+                          </p>
+                          <p className="mt-3 text-sm text-neutral-600 line-clamp-2">
+                            {req.description}
+                          </p>
+                        </div>
+                        <div className="flex shrink-0 gap-2">
+                          <button
+                            onClick={() => startEditRequest(req)}
+                            className="rounded-full bg-neutral-950 px-4 py-2 text-sm font-bold text-white"
+                          >
+                            수정
+                          </button>
+                          <button
+                            onClick={() => deleteRequest(req.id)}
+                            className="rounded-full border border-neutral-300 px-4 py-2 text-sm font-bold"
+                          >
+                            삭제
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-2xl bg-neutral-50 p-6">
+                    <p className="font-bold">아직 올린 의뢰가 없습니다.</p>
+                    <p className="mt-2 text-sm text-neutral-500">
+                      의뢰를 등록하면 이곳에서 수정하고 관리할 수 있습니다.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {step === "requestCreate" && (
         <section className="mx-auto max-w-4xl px-6 py-16">
-          <h2 className="text-5xl font-black tracking-tight">Post a request</h2>
+          <h2 className="text-5xl font-black tracking-tight">
+            {editingRequestId ? "Edit request" : "Post a request"}
+          </h2>
           <p className="mt-4 text-neutral-500">
-            의뢰를 올리면 같은 카드 형식으로 의뢰 게시판에 표시됩니다.
+            {editingRequestId
+              ? "내가 작성한 의뢰 내용을 수정합니다."
+              : "의뢰를 올리면 같은 카드 형식으로 의뢰 게시판에 표시됩니다."}
           </p>
 
           <div className="mt-10 rounded-[2rem] bg-white p-8 shadow-sm">
@@ -761,9 +1052,23 @@ export default function Home() {
               }
             />
 
-            <button onClick={saveRequest} className="mt-6 w-full rounded-full bg-neutral-950 p-4 font-black text-white">
-              의뢰 등록하기
-            </button>
+            <div className="mt-6 flex gap-3">
+              <button onClick={saveRequest} className="flex-1 rounded-full bg-neutral-950 p-4 font-black text-white">
+                {editingRequestId ? "의뢰 수정 저장" : "의뢰 등록하기"}
+              </button>
+              {editingRequestId && (
+                <button
+                  onClick={() => {
+                    setEditingRequestId(null);
+                    setRequestForm(emptyRequestForm);
+                    setStep("myPage");
+                  }}
+                  className="rounded-full border border-neutral-300 px-7 py-4 font-black"
+                >
+                  취소
+                </button>
+              )}
+            </div>
           </div>
         </section>
       )}
@@ -781,7 +1086,7 @@ export default function Home() {
               </p>
             </div>
 
-            <button onClick={() => setStep("requestCreate")} className={primaryButton}>
+            <button onClick={startNewRequest} className={primaryButton}>
               의뢰 등록하기
             </button>
           </div>
@@ -837,12 +1142,22 @@ export default function Home() {
                     >
                       의뢰 상세
                     </button>
-                    <button
-                      onClick={() => setStep("pilots")}
-                      className="flex-1 rounded-full bg-neutral-950 px-4 py-3 text-sm font-black text-white"
-                    >
-                      지원하기
-                    </button>
+
+                    {session?.user?.id === req.user_id ? (
+                      <button
+                        onClick={() => startEditRequest(req)}
+                        className="flex-1 rounded-full bg-neutral-950 px-4 py-3 text-sm font-black text-white"
+                      >
+                        내 글 수정
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setStep("pilots")}
+                        className="flex-1 rounded-full bg-neutral-950 px-4 py-3 text-sm font-black text-white"
+                      >
+                        지원하기
+                      </button>
+                    )}
                   </div>
                 </div>
               </article>
@@ -996,6 +1311,14 @@ export default function Home() {
                     setPilotForm({ ...pilotForm, thumbnail_url: e.target.value })
                   }
                 />
+                <input
+                  placeholder="대표 유튜브 영상 링크"
+                  className={inputClass}
+                  value={pilotForm.portfolio_url}
+                  onChange={(e) =>
+                    setPilotForm({ ...pilotForm, portfolio_url: e.target.value })
+                  }
+                />
                 <textarea
                   placeholder="자기소개"
                   className="h-28 rounded-2xl border border-neutral-200 p-4 outline-none focus:border-neutral-950"
@@ -1062,6 +1385,22 @@ export default function Home() {
               >
                 포트폴리오 등록
               </button>
+
+              <div className="mt-8">
+                <h4 className="font-black">내 포트폴리오</h4>
+                <div className="mt-4 space-y-3">
+                  {myPortfolio.length > 0 ? (
+                    myPortfolio.map((item) => (
+                      <div key={item.id} className="rounded-2xl bg-neutral-50 p-4">
+                        <p className="font-bold">{item.title}</p>
+                        <p className="text-sm text-neutral-500">{item.category}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-neutral-500">아직 등록한 포트폴리오가 없습니다.</p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -1158,15 +1497,28 @@ export default function Home() {
               <p>📅 마감 {selectedRequest.deadline}</p>
             </div>
 
-            <button
-              onClick={() => {
-                setSelectedRequest(null);
-                setStep("pilots");
-              }}
-              className="mt-8 w-full rounded-full bg-neutral-950 p-4 font-black text-white"
-            >
-              이 의뢰에 지원할 촬영자 찾기
-            </button>
+            <div className="mt-8 flex gap-3">
+              {session?.user?.id === selectedRequest.user_id && (
+                <button
+                  onClick={() => {
+                    setSelectedRequest(null);
+                    startEditRequest(selectedRequest);
+                  }}
+                  className="flex-1 rounded-full border border-neutral-300 p-4 font-black"
+                >
+                  이 글 수정하기
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  setSelectedRequest(null);
+                  setStep("pilots");
+                }}
+                className="flex-1 rounded-full bg-neutral-950 p-4 font-black text-white"
+              >
+                이 의뢰에 지원할 촬영자 찾기
+              </button>
+            </div>
           </div>
         </div>
       )}
