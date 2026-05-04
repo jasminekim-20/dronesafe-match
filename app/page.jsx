@@ -207,6 +207,15 @@ function youtubeEmbed(url) {
   return match ? `https://www.youtube.com/embed/${match[1]}` : url;
 }
 
+function youtubeThumbnail(url) {
+  if (!url) return "";
+  const match =
+    url.match(/youtube\.com\/watch\?v=([^&]+)/) ||
+    url.match(/youtu\.be\/([^?]+)/) ||
+    url.match(/youtube\.com\/shorts\/([^?]+)/);
+  return match ? `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg` : "";
+}
+
 function daysLeft(dateText) {
   if (!dateText) return "";
   const target = new Date(dateText);
@@ -534,12 +543,15 @@ export default function Home() {
       return;
     }
 
+    const finalThumbnail =
+      workForm.thumbnail_url || youtubeThumbnail(workForm.video_url);
+
     const payload = {
       user_id: session.user.id,
       title: workForm.title,
       category: workForm.category,
       video_url: workForm.video_url,
-      thumbnail_url: workForm.thumbnail_url,
+      thumbnail_url: finalThumbnail,
       description: workForm.description,
     };
 
@@ -679,6 +691,39 @@ export default function Home() {
     alert("삭제되었습니다.");
     await fetchRequests();
     await fetchMyPage(session.user.id);
+  }
+
+  async function acceptRequest(req) {
+    if (!session?.user) {
+      alert("의뢰를 수락하려면 먼저 로그인해주세요.");
+      setStep("auth");
+      setRole("pilot");
+      return;
+    }
+
+    if (req.user_id === session.user.id) {
+      alert("내가 올린 의뢰는 직접 수락할 수 없습니다.");
+      return;
+    }
+
+    const { error } = await supabase.from("request_applications").insert({
+      request_id: req.id,
+      pilot_id: session.user.id,
+      status: "accepted",
+      message: "촬영자가 의뢰 수락을 보냈습니다.",
+    });
+
+    if (error) {
+      if (error.message.includes("duplicate key")) {
+        alert("이미 이 의뢰를 수락했습니다.");
+        return;
+      }
+
+      alert(error.message);
+      return;
+    }
+
+    alert("의뢰를 수락했습니다. 의뢰자에게 지원 의사가 전달되었습니다.");
   }
 
   const matchedPilots = useMemo(() => {
@@ -963,7 +1008,10 @@ export default function Home() {
             <div className="rounded-[2rem] bg-white p-8 shadow-sm">
               <div className="flex items-center justify-between">
                 <h3 className="text-2xl font-black">내가 올린 의뢰</h3>
-                <button onClick={startNewRequest} className="rounded-full border px-5 py-2 text-sm font-bold">
+                <button
+                  onClick={startNewRequest}
+                  className="rounded-full border px-5 py-2 text-sm font-bold"
+                >
                   새 글
                 </button>
               </div>
@@ -1238,10 +1286,10 @@ export default function Home() {
                       </button>
                     ) : (
                       <button
-                        onClick={() => setStep("pilots")}
+                        onClick={() => acceptRequest(req)}
                         className="flex-1 rounded-full bg-neutral-950 px-4 py-3 text-sm font-black text-white"
                       >
-                        지원하기
+                        의뢰 수락하기
                       </button>
                     )}
                   </div>
@@ -1444,7 +1492,7 @@ export default function Home() {
                   onChange={(e) => setWorkForm({ ...workForm, video_url: e.target.value })}
                 />
                 <input
-                  placeholder="썸네일 이미지 URL"
+                  placeholder="썸네일 이미지 URL 직접 입력 또는 비워두면 유튜브 썸네일 자동 사용"
                   className={inputClass}
                   value={workForm.thumbnail_url}
                   onChange={(e) => setWorkForm({ ...workForm, thumbnail_url: e.target.value })}
@@ -1656,15 +1704,15 @@ export default function Home() {
                   이 글 수정하기
                 </button>
               )}
-              <button
-                onClick={() => {
-                  setSelectedRequest(null);
-                  setStep("pilots");
-                }}
-                className="flex-1 rounded-full bg-neutral-950 p-4 font-black text-white"
-              >
-                이 의뢰에 지원할 촬영자 찾기
-              </button>
+
+              {session?.user?.id !== selectedRequest.user_id && (
+                <button
+                  onClick={() => acceptRequest(selectedRequest)}
+                  className="flex-1 rounded-full bg-neutral-950 p-4 font-black text-white"
+                >
+                  이 의뢰 수락하기
+                </button>
+              )}
             </div>
           </div>
         </div>
