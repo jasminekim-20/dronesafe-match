@@ -160,52 +160,6 @@ const fallbackPilots = [
   },
 ];
 
-function youtubeEmbed(url) {
-  if (!url) return "";
-  const match =
-    url.match(/youtube\.com\/watch\?v=([^&]+)/) ||
-    url.match(/youtu\.be\/([^?]+)/) ||
-    url.match(/youtube\.com\/shorts\/([^?]+)/);
-  return match ? `https://www.youtube.com/embed/${match[1]}` : url;
-}
-
-function daysLeft(dateText) {
-  if (!dateText) return "";
-  const target = new Date(dateText);
-  const today = new Date();
-  const diff = Math.ceil((target - today) / (1000 * 60 * 60 * 24));
-  if (Number.isNaN(diff)) return "";
-  if (diff < 0) return "마감";
-  return `D-${diff}`;
-}
-
-function getMatch(pilot, form) {
-  let score = 25;
-  const reasons = [];
-
-  if (pilot.region === form.region) {
-    score += 30;
-    reasons.push("지역 경험 일치");
-  }
-
-  if ((pilot.specialties || []).includes(form.purpose)) {
-    score += 30;
-    reasons.push("비슷한 촬영 포트폴리오 보유");
-  }
-
-  if (Number(pilot.delivery_rate) >= 95) {
-    score += 10;
-    reasons.push("납품 만족도 우수");
-  }
-
-  if (Number(pilot.reshoot_rate) <= 2) {
-    score += 5;
-    reasons.push("재촬영률 낮음");
-  }
-
-  return { ...pilot, score: Math.min(score, 100), reasons };
-}
-
 const emptyRequestForm = {
   title: "",
   client_type: "기업/브랜드",
@@ -236,6 +190,44 @@ const emptyPilotForm = {
   client_examples: "",
 };
 
+const emptyWorkForm = {
+  title: "",
+  category: "홍보영상",
+  video_url: "",
+  thumbnail_url: "",
+  description: "",
+};
+
+function youtubeEmbed(url) {
+  if (!url) return "";
+  const match =
+    url.match(/youtube\.com\/watch\?v=([^&]+)/) ||
+    url.match(/youtu\.be\/([^?]+)/) ||
+    url.match(/youtube\.com\/shorts\/([^?]+)/);
+  return match ? `https://www.youtube.com/embed/${match[1]}` : url;
+}
+
+function daysLeft(dateText) {
+  if (!dateText) return "";
+  const target = new Date(dateText);
+  const today = new Date();
+  const diff = Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+  if (Number.isNaN(diff)) return "";
+  if (diff < 0) return "마감";
+  return `D-${diff}`;
+}
+
+function getMatch(pilot, form) {
+  let score = 25;
+
+  if (pilot.region === form.region) score += 30;
+  if ((pilot.specialties || []).includes(form.purpose)) score += 30;
+  if (Number(pilot.delivery_rate) >= 95) score += 10;
+  if (Number(pilot.reshoot_rate) <= 2) score += 5;
+
+  return { ...pilot, score: Math.min(score, 100) };
+}
+
 export default function Home() {
   const [step, setStep] = useState("home");
   const [session, setSession] = useState(null);
@@ -264,20 +256,22 @@ export default function Home() {
 
   const [pilotForm, setPilotForm] = useState(emptyPilotForm);
 
-  const [workForm, setWorkForm] = useState({
-    title: "",
-    category: "홍보영상",
-    video_url: "",
-    thumbnail_url: "",
-    description: "",
-  });
+  const [workForm, setWorkForm] = useState(emptyWorkForm);
+  const [editingWorkId, setEditingWorkId] = useState(null);
+
+  const inputClass =
+    "w-full rounded-2xl border border-neutral-200 bg-white px-5 py-4 text-sm outline-none transition focus:border-neutral-900";
+
+  const primaryButton =
+    "rounded-full bg-neutral-950 px-7 py-4 text-sm font-bold text-white transition hover:bg-neutral-800";
+
+  const secondaryButton =
+    "rounded-full border border-neutral-300 bg-white px-7 py-4 text-sm font-bold text-neutral-900 transition hover:border-neutral-900";
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
-      if (data.session?.user) {
-        fetchMyPage(data.session.user.id);
-      }
+      if (data.session?.user) fetchMyPage(data.session.user.id);
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -303,11 +297,7 @@ export default function Home() {
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (data && data.length > 0) {
-      setPilots([...data, ...fallbackPilots]);
-    } else {
-      setPilots(fallbackPilots);
-    }
+    setPilots(data && data.length > 0 ? [...data, ...fallbackPilots] : fallbackPilots);
   }
 
   async function fetchRequests() {
@@ -316,11 +306,7 @@ export default function Home() {
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (data && data.length > 0) {
-      setRequests([...data, ...fallbackRequests]);
-    } else {
-      setRequests(fallbackRequests);
-    }
+    setRequests(data && data.length > 0 ? [...data, ...fallbackRequests] : fallbackRequests);
   }
 
   async function fetchMyPage(userId) {
@@ -357,6 +343,8 @@ export default function Home() {
         avatar_url: profile.avatar_url || "",
         client_examples: profile.client_examples || "",
       });
+    } else {
+      setPilotForm(emptyPilotForm);
     }
 
     const { data: works } = await supabase
@@ -403,10 +391,7 @@ export default function Home() {
       .from("avatars")
       .upload(filePath, file, { upsert: true });
 
-    if (error) {
-      alert(error.message);
-      return;
-    }
+    if (error) return alert(error.message);
 
     const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
     setPilotForm({ ...pilotForm, avatar_url: data.publicUrl });
@@ -429,10 +414,7 @@ export default function Home() {
       .from("request-images")
       .upload(filePath, file, { upsert: true });
 
-    if (error) {
-      alert(error.message);
-      return;
-    }
+    if (error) return alert(error.message);
 
     const { data } = supabase.storage.from("request-images").getPublicUrl(filePath);
 
@@ -519,6 +501,28 @@ export default function Home() {
     setStep("myPage");
   }
 
+  function startNewWork() {
+    setEditingWorkId(null);
+    setWorkForm(emptyWorkForm);
+  }
+
+  function startEditWork(item) {
+    if (!session?.user || item.user_id !== session.user.id) {
+      alert("내가 등록한 포트폴리오만 수정할 수 있습니다.");
+      return;
+    }
+
+    setEditingWorkId(item.id);
+    setWorkForm({
+      title: item.title || "",
+      category: item.category || "홍보영상",
+      video_url: item.video_url || "",
+      thumbnail_url: item.thumbnail_url || "",
+      description: item.description || "",
+    });
+    setStep("pilotManage");
+  }
+
   async function saveWork() {
     if (!session?.user) {
       alert("로그인이 필요합니다.");
@@ -530,23 +534,56 @@ export default function Home() {
       return;
     }
 
-    const { error } = await supabase.from("portfolio_items").insert({
+    const payload = {
       user_id: session.user.id,
-      ...workForm,
-    });
+      title: workForm.title,
+      category: workForm.category,
+      video_url: workForm.video_url,
+      thumbnail_url: workForm.thumbnail_url,
+      description: workForm.description,
+    };
+
+    if (editingWorkId) {
+      const { error } = await supabase
+        .from("portfolio_items")
+        .update(payload)
+        .eq("id", editingWorkId)
+        .eq("user_id", session.user.id);
+
+      if (error) return alert(error.message);
+
+      alert("포트폴리오가 수정되었습니다.");
+    } else {
+      const { error } = await supabase.from("portfolio_items").insert(payload);
+
+      if (error) return alert(error.message);
+
+      alert("포트폴리오가 추가되었습니다.");
+    }
+
+    setEditingWorkId(null);
+    setWorkForm(emptyWorkForm);
+    await fetchMyPage(session.user.id);
+    await fetchPortfolio(session.user.id);
+  }
+
+  async function deleteWork(itemId) {
+    if (!session?.user) return;
+
+    const ok = confirm("이 포트폴리오를 삭제할까요?");
+    if (!ok) return;
+
+    const { error } = await supabase
+      .from("portfolio_items")
+      .delete()
+      .eq("id", itemId)
+      .eq("user_id", session.user.id);
 
     if (error) return alert(error.message);
 
-    alert("포트폴리오가 추가되었습니다.");
-    setWorkForm({
-      title: "",
-      category: "홍보영상",
-      video_url: "",
-      thumbnail_url: "",
-      description: "",
-    });
-
+    alert("포트폴리오가 삭제되었습니다.");
     await fetchMyPage(session.user.id);
+    await fetchPortfolio(session.user.id);
   }
 
   function startNewRequest() {
@@ -649,15 +686,6 @@ export default function Home() {
       .map((p) => getMatch(p, { region: requestForm.region, purpose: requestForm.purpose }))
       .sort((a, b) => b.score - a.score);
   }, [pilots, requestForm.region, requestForm.purpose]);
-
-  const inputClass =
-    "w-full rounded-2xl border border-neutral-200 bg-white px-5 py-4 text-sm outline-none transition focus:border-neutral-900";
-
-  const primaryButton =
-    "rounded-full bg-neutral-950 px-7 py-4 text-sm font-bold text-white transition hover:bg-neutral-800";
-
-  const secondaryButton =
-    "rounded-full border border-neutral-300 bg-white px-7 py-4 text-sm font-bold text-neutral-900 transition hover:border-neutral-900";
 
   return (
     <main className="min-h-screen bg-[#f7f6f3] text-neutral-950">
@@ -1060,9 +1088,7 @@ export default function Home() {
               />
 
               <div className="rounded-2xl border border-neutral-200 bg-white p-4">
-                <p className="mb-3 text-sm font-bold text-neutral-700">
-                  의뢰 대표 이미지
-                </p>
+                <p className="mb-3 text-sm font-bold text-neutral-700">의뢰 대표 이미지</p>
 
                 <div className="flex items-center gap-4">
                   <div className="h-24 w-32 overflow-hidden rounded-xl bg-neutral-100">
@@ -1106,9 +1132,7 @@ export default function Home() {
               placeholder="상세 설명"
               className="mt-4 h-32 w-full rounded-2xl border border-neutral-200 p-4 outline-none focus:border-neutral-950"
               value={requestForm.description}
-              onChange={(e) =>
-                setRequestForm({ ...requestForm, description: e.target.value })
-              }
+              onChange={(e) => setRequestForm({ ...requestForm, description: e.target.value })}
             />
 
             <div className="mt-6 flex gap-3">
@@ -1327,9 +1351,7 @@ export default function Home() {
                   placeholder="업체명 / 활동명"
                   className={inputClass}
                   value={pilotForm.display_name}
-                  onChange={(e) =>
-                    setPilotForm({ ...pilotForm, display_name: e.target.value })
-                  }
+                  onChange={(e) => setPilotForm({ ...pilotForm, display_name: e.target.value })}
                 />
                 <input
                   placeholder="한 줄 PR"
@@ -1369,17 +1391,13 @@ export default function Home() {
                   placeholder="대표 썸네일 이미지 URL"
                   className={inputClass}
                   value={pilotForm.thumbnail_url}
-                  onChange={(e) =>
-                    setPilotForm({ ...pilotForm, thumbnail_url: e.target.value })
-                  }
+                  onChange={(e) => setPilotForm({ ...pilotForm, thumbnail_url: e.target.value })}
                 />
                 <input
                   placeholder="대표 유튜브 영상 링크"
                   className={inputClass}
                   value={pilotForm.portfolio_url}
-                  onChange={(e) =>
-                    setPilotForm({ ...pilotForm, portfolio_url: e.target.value })
-                  }
+                  onChange={(e) => setPilotForm({ ...pilotForm, portfolio_url: e.target.value })}
                 />
                 <textarea
                   placeholder="자기소개"
@@ -1398,7 +1416,19 @@ export default function Home() {
             </div>
 
             <div className="rounded-[2rem] bg-white p-8 shadow-sm">
-              <h3 className="text-2xl font-black">Portfolio</h3>
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-2xl font-black">
+                  {editingWorkId ? "Portfolio 수정" : "Portfolio 등록"}
+                </h3>
+                {editingWorkId && (
+                  <button
+                    onClick={startNewWork}
+                    className="rounded-full border border-neutral-300 px-4 py-2 text-sm font-bold"
+                  >
+                    새 포트폴리오 작성
+                  </button>
+                )}
+              </div>
 
               <div className="mt-6 grid gap-4">
                 <input
@@ -1417,9 +1447,7 @@ export default function Home() {
                   placeholder="썸네일 이미지 URL"
                   className={inputClass}
                   value={workForm.thumbnail_url}
-                  onChange={(e) =>
-                    setWorkForm({ ...workForm, thumbnail_url: e.target.value })
-                  }
+                  onChange={(e) => setWorkForm({ ...workForm, thumbnail_url: e.target.value })}
                 />
                 <select
                   className={inputClass}
@@ -1435,9 +1463,7 @@ export default function Home() {
                   placeholder="작품 설명"
                   className="h-24 rounded-2xl border border-neutral-200 p-4 outline-none focus:border-neutral-950"
                   value={workForm.description}
-                  onChange={(e) =>
-                    setWorkForm({ ...workForm, description: e.target.value })
-                  }
+                  onChange={(e) => setWorkForm({ ...workForm, description: e.target.value })}
                 />
               </div>
 
@@ -1445,7 +1471,7 @@ export default function Home() {
                 onClick={saveWork}
                 className="mt-6 w-full rounded-full bg-neutral-950 p-4 font-black text-white"
               >
-                포트폴리오 등록
+                {editingWorkId ? "포트폴리오 수정 저장" : "포트폴리오 등록"}
               </button>
 
               <div className="mt-8">
@@ -1453,13 +1479,52 @@ export default function Home() {
                 <div className="mt-4 space-y-3">
                   {myPortfolio.length > 0 ? (
                     myPortfolio.map((item) => (
-                      <div key={item.id} className="rounded-2xl bg-neutral-50 p-4">
-                        <p className="font-bold">{item.title}</p>
-                        <p className="text-sm text-neutral-500">{item.category}</p>
+                      <div
+                        key={item.id}
+                        className={`rounded-2xl p-4 ${
+                          editingWorkId === item.id
+                            ? "border border-neutral-950 bg-white"
+                            : "bg-neutral-50"
+                        }`}
+                      >
+                        <div className="flex gap-4">
+                          <img
+                            src={item.thumbnail_url || DEFAULT_REQUEST_IMAGE}
+                            onError={(e) => {
+                              e.currentTarget.src = DEFAULT_REQUEST_IMAGE;
+                            }}
+                            className="h-20 w-28 rounded-xl object-cover"
+                            alt={item.title}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="font-bold">{item.title}</p>
+                            <p className="mt-1 text-sm text-neutral-500">{item.category}</p>
+                            <p className="mt-2 line-clamp-2 text-sm text-neutral-500">
+                              {item.description}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 flex gap-2">
+                          <button
+                            onClick={() => startEditWork(item)}
+                            className="rounded-full bg-neutral-950 px-4 py-2 text-sm font-bold text-white"
+                          >
+                            수정
+                          </button>
+                          <button
+                            onClick={() => deleteWork(item.id)}
+                            className="rounded-full border border-neutral-300 px-4 py-2 text-sm font-bold"
+                          >
+                            삭제
+                          </button>
+                        </div>
                       </div>
                     ))
                   ) : (
-                    <p className="text-sm text-neutral-500">아직 등록한 포트폴리오가 없습니다.</p>
+                    <p className="text-sm text-neutral-500">
+                      아직 등록한 포트폴리오가 없습니다.
+                    </p>
                   )}
                 </div>
               </div>
@@ -1526,6 +1591,26 @@ export default function Home() {
                     <div className="p-4">
                       <p className="font-black">{item.title}</p>
                       <p className="mt-1 text-sm text-neutral-500">{item.category}</p>
+
+                      {session?.user?.id === item.user_id && (
+                        <div className="mt-4 flex gap-2">
+                          <button
+                            onClick={() => {
+                              setSelectedPilot(null);
+                              startEditWork(item);
+                            }}
+                            className="rounded-full bg-neutral-950 px-4 py-2 text-xs font-bold text-white"
+                          >
+                            수정
+                          </button>
+                          <button
+                            onClick={() => deleteWork(item.id)}
+                            className="rounded-full border border-neutral-300 px-4 py-2 text-xs font-bold"
+                          >
+                            삭제
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))
