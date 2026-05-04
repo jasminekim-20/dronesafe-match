@@ -277,6 +277,9 @@ export default function Home() {
   const secondaryButton =
     "rounded-full border border-neutral-300 bg-white px-7 py-4 text-sm font-bold text-neutral-900 transition hover:border-neutral-900";
 
+  const mobilePrimaryButton = `${primaryButton} w-full sm:w-auto`;
+  const mobileSecondaryButton = `${secondaryButton} w-full sm:w-auto`;
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
@@ -706,6 +709,11 @@ export default function Home() {
       return;
     }
 
+    if (req.user_id === "mock" || String(req.id).startsWith("req-")) {
+      alert("이 의뢰는 예시용 샘플 의뢰입니다. 실제 사용자가 등록한 의뢰만 수락할 수 있습니다.");
+      return;
+    }
+
     const { error } = await supabase.from("request_applications").insert({
       request_id: req.id,
       pilot_id: session.user.id,
@@ -735,12 +743,12 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-[#f7f6f3] text-neutral-950">
       <header className="sticky top-0 z-50 border-b border-neutral-200 bg-[#f7f6f3]/90 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
-          <button onClick={() => setStep("home")} className="text-xl font-black tracking-tight">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 md:flex-row md:items-center md:justify-between md:px-6 md:py-5">
+          <button onClick={() => setStep("home")} className="self-start text-xl font-black tracking-tight md:self-auto">
             DroneSafeMatch
           </button>
 
-          <nav className="hidden gap-8 text-sm font-semibold text-neutral-500 md:flex">
+          <nav className="flex w-full gap-4 overflow-x-auto whitespace-nowrap text-sm font-semibold text-neutral-500 md:w-auto md:gap-8 md:overflow-visible">
             <button onClick={() => setStep("home")} className="hover:text-neutral-950">
               Home
             </button>
@@ -782,13 +790,13 @@ export default function Home() {
       </header>
 
       {step === "home" && (
-        <section className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 px-6 py-20 lg:grid-cols-[0.9fr_1.1fr]">
+        <section className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16 lg:py-20">
           <div>
             <p className="mb-5 text-sm font-bold uppercase tracking-[0.25em] text-neutral-400">
               Portfolio-first drone matching
             </p>
 
-            <h1 className="text-6xl font-black leading-[0.95] tracking-tight md:text-7xl">
+            <h1 className="text-4xl font-black leading-[0.95] tracking-tight sm:text-5xl md:text-7xl">
               Find the right
               <br />
               drone creator
@@ -796,16 +804,16 @@ export default function Home() {
               by their work.
             </h1>
 
-            <p className="mt-8 max-w-xl text-lg leading-8 text-neutral-600">
+            <p className="mt-6 max-w-xl text-base leading-7 text-neutral-600 sm:mt-8 sm:text-lg sm:leading-8">
               의뢰자는 촬영 요청을 올리고, 촬영자는 포트폴리오로 지원합니다.
               실제 결과물과 스타일을 보고 프로젝트에 맞는 촬영자를 선택하세요.
             </p>
 
-            <div className="mt-10 flex flex-wrap gap-4">
-              <button onClick={startNewRequest} className={primaryButton}>
+            <div className="mt-8 flex flex-col gap-3 sm:mt-10 sm:flex-row sm:flex-wrap">
+              <button onClick={startNewRequest} className={mobilePrimaryButton}>
                 의뢰 등록하기
               </button>
-              <button onClick={() => setStep("pilots")} className={secondaryButton}>
+              <button onClick={() => setStep("pilots")} className={mobileSecondaryButton}>
                 촬영자 보기
               </button>
             </div>
@@ -840,8 +848,8 @@ export default function Home() {
       )}
 
       {step === "auth" && (
-        <section className="mx-auto max-w-2xl px-6 py-16">
-          <div className="rounded-[2rem] bg-white p-8 shadow-xl shadow-neutral-200">
+        <section className="mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-16">
+          <div className="rounded-[1.5rem] bg-white p-5 shadow-xl shadow-neutral-200 sm:rounded-[2rem] sm:p-8">
             <div className="mb-6 flex gap-3">
               <button
                 onClick={() => setAuthMode("signup")}
@@ -862,7 +870,7 @@ export default function Home() {
             </div>
 
             {authMode === "signup" && (
-              <div className="mb-5 grid grid-cols-2 gap-4">
+              <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
                 <button
                   onClick={() => setRole("client")}
                   className={`rounded-2xl border p-5 text-left ${
@@ -918,13 +926,13 @@ export default function Home() {
       )}
 
       {step === "myPage" && (
-        <section className="mx-auto max-w-7xl px-6 py-16">
+        <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-16">
           <div className="flex flex-wrap items-end justify-between gap-5">
             <div>
               <p className="text-sm font-bold uppercase tracking-[0.25em] text-neutral-400">
                 My workspace
               </p>
-              <h2 className="mt-4 text-5xl font-black tracking-tight">내 페이지</h2>
+              <h2 className="mt-3 text-3xl font-black tracking-tight sm:mt-4 sm:text-5xl">내 페이지</h2>
               <p className="mt-4 text-neutral-500">
                 내가 올린 의뢰, 촬영자 프로필, 포트폴리오를 한 곳에서 관리합니다.
               </p>
@@ -939,28 +947,28 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="mt-10 grid gap-6 lg:grid-cols-3">
-            <div className="rounded-[2rem] bg-white p-7 shadow-sm">
+          <div className="mt-8 grid gap-5 sm:mt-10 lg:grid-cols-3">
+            <div className="rounded-[1.5rem] bg-white p-5 shadow-sm sm:rounded-[2rem] sm:p-7">
               <h3 className="text-xl font-black">계정</h3>
               <p className="mt-4 text-sm text-neutral-500">로그인 이메일</p>
               <p className="mt-2 font-bold">{session?.user?.email}</p>
             </div>
 
-            <div className="rounded-[2rem] bg-white p-7 shadow-sm">
+            <div className="rounded-[1.5rem] bg-white p-5 shadow-sm sm:rounded-[2rem] sm:p-7">
               <h3 className="text-xl font-black">내 의뢰</h3>
               <p className="mt-4 text-4xl font-black">{myRequests.length}</p>
               <p className="mt-2 text-sm text-neutral-500">등록한 촬영 의뢰</p>
             </div>
 
-            <div className="rounded-[2rem] bg-white p-7 shadow-sm">
+            <div className="rounded-[1.5rem] bg-white p-5 shadow-sm sm:rounded-[2rem] sm:p-7">
               <h3 className="text-xl font-black">내 포트폴리오</h3>
               <p className="mt-4 text-4xl font-black">{myPortfolio.length}</p>
               <p className="mt-2 text-sm text-neutral-500">등록한 작업물</p>
             </div>
           </div>
 
-          <div className="mt-8 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-            <div className="rounded-[2rem] bg-white p-8 shadow-sm">
+          <div className="mt-6 grid gap-5 sm:mt-8 lg:grid-cols-[0.9fr_1.1fr]">
+            <div className="rounded-[1.5rem] bg-white p-5 shadow-sm sm:rounded-[2rem] sm:p-8">
               <h3 className="text-2xl font-black">내 촬영자 프로필</h3>
 
               {myPilotProfile ? (
@@ -1005,7 +1013,7 @@ export default function Home() {
               )}
             </div>
 
-            <div className="rounded-[2rem] bg-white p-8 shadow-sm">
+            <div className="rounded-[1.5rem] bg-white p-5 shadow-sm sm:rounded-[2rem] sm:p-8">
               <div className="flex items-center justify-between">
                 <h3 className="text-2xl font-black">내가 올린 의뢰</h3>
                 <button
@@ -1062,8 +1070,8 @@ export default function Home() {
       )}
 
       {step === "requestCreate" && (
-        <section className="mx-auto max-w-4xl px-6 py-16">
-          <h2 className="text-5xl font-black tracking-tight">
+        <section className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-16">
+          <h2 className="text-3xl font-black tracking-tight sm:text-5xl">
             {editingRequestId ? "Edit request" : "Post a request"}
           </h2>
           <p className="mt-4 text-neutral-500">
@@ -1072,7 +1080,7 @@ export default function Home() {
               : "의뢰를 올리면 같은 카드 형식으로 의뢰 게시판에 표시됩니다."}
           </p>
 
-          <div className="mt-10 rounded-[2rem] bg-white p-8 shadow-sm">
+          <div className="mt-8 rounded-[1.5rem] bg-white p-5 shadow-sm sm:mt-10 sm:rounded-[2rem] sm:p-8">
             <div className="grid gap-4 md:grid-cols-2">
               <input
                 placeholder="의뢰 제목"
@@ -1183,10 +1191,10 @@ export default function Home() {
               onChange={(e) => setRequestForm({ ...requestForm, description: e.target.value })}
             />
 
-            <div className="mt-6 flex gap-3">
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <button
                 onClick={saveRequest}
-                className="flex-1 rounded-full bg-neutral-950 p-4 font-black text-white"
+                className="w-full flex-1 rounded-full bg-neutral-950 p-4 font-black text-white"
               >
                 {editingRequestId ? "의뢰 수정 저장" : "의뢰 등록하기"}
               </button>
@@ -1208,13 +1216,13 @@ export default function Home() {
       )}
 
       {step === "requests" && (
-        <section className="mx-auto max-w-7xl px-6 py-16">
+        <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-16">
           <div className="flex flex-wrap items-end justify-between gap-5">
             <div>
               <p className="text-sm font-bold uppercase tracking-[0.25em] text-neutral-400">
                 Open requests
               </p>
-              <h2 className="mt-4 text-5xl font-black tracking-tight">현재 올라온 촬영 의뢰</h2>
+              <h2 className="mt-3 text-3xl font-black tracking-tight sm:mt-4 sm:text-5xl">현재 올라온 촬영 의뢰</h2>
               <p className="mt-4 text-neutral-500">
                 기본 의뢰 5개와 사용자가 등록한 의뢰가 같은 카드 형식으로 표시됩니다.
               </p>
@@ -1225,7 +1233,7 @@ export default function Home() {
             </button>
           </div>
 
-          <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-8 grid gap-5 sm:mt-10 md:grid-cols-2 lg:grid-cols-3">
             {requests.map((req) => (
               <article
                 key={req.id}
@@ -1236,7 +1244,7 @@ export default function Home() {
                   onError={(e) => {
                     e.currentTarget.src = DEFAULT_REQUEST_IMAGE;
                   }}
-                  className="h-56 w-full object-cover"
+                  className="h-48 w-full object-cover sm:h-56"
                   alt={req.title || "촬영 의뢰 이미지"}
                 />
 
@@ -1269,10 +1277,10 @@ export default function Home() {
                     ))}
                   </div>
 
-                  <div className="mt-6 flex gap-3">
+                  <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                     <button
                       onClick={() => setSelectedRequest(req)}
-                      className="flex-1 rounded-full border border-neutral-300 px-4 py-3 text-sm font-black"
+                      className="w-full flex-1 rounded-full border border-neutral-300 px-4 py-3 text-sm font-black"
                     >
                       의뢰 상세
                     </button>
@@ -1280,14 +1288,23 @@ export default function Home() {
                     {session?.user?.id === req.user_id ? (
                       <button
                         onClick={() => startEditRequest(req)}
-                        className="flex-1 rounded-full bg-neutral-950 px-4 py-3 text-sm font-black text-white"
+                        className="w-full flex-1 rounded-full bg-neutral-950 px-4 py-3 text-sm font-black text-white"
                       >
                         내 글 수정
+                      </button>
+                    ) : req.user_id === "mock" || String(req.id).startsWith("req-") ? (
+                      <button
+                        onClick={() =>
+                          alert("이 의뢰는 예시용 샘플 의뢰입니다. 실제 등록된 의뢰만 수락할 수 있습니다.")
+                        }
+                        className="w-full flex-1 rounded-full bg-neutral-200 px-4 py-3 text-sm font-black text-neutral-500"
+                      >
+                        샘플 의뢰
                       </button>
                     ) : (
                       <button
                         onClick={() => acceptRequest(req)}
-                        className="flex-1 rounded-full bg-neutral-950 px-4 py-3 text-sm font-black text-white"
+                        className="w-full flex-1 rounded-full bg-neutral-950 px-4 py-3 text-sm font-black text-white"
                       >
                         의뢰 수락하기
                       </button>
@@ -1301,13 +1318,13 @@ export default function Home() {
       )}
 
       {step === "pilots" && (
-        <section className="mx-auto max-w-7xl px-6 py-16">
-          <h2 className="text-5xl font-black tracking-tight">Explore portfolios</h2>
+        <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-16">
+          <h2 className="text-3xl font-black tracking-tight sm:text-5xl">Explore portfolios</h2>
           <p className="mt-4 text-neutral-500">
             카드 클릭 시 촬영자의 대표 영상, 프로필 사진, PR 정보를 확인할 수 있습니다.
           </p>
 
-          <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-8 grid gap-5 sm:mt-10 md:grid-cols-2 lg:grid-cols-3">
             {matchedPilots.map((p) => (
               <button
                 key={p.id}
@@ -1317,7 +1334,7 @@ export default function Home() {
                 <div className="relative overflow-hidden">
                   <img
                     src={p.thumbnail_url || DEFAULT_REQUEST_IMAGE}
-                    className="h-72 w-full object-cover transition duration-700 group-hover:scale-105"
+                    className="h-56 w-full object-cover transition duration-700 group-hover:scale-105 sm:h-72"
                     alt={p.display_name}
                     onError={(e) => {
                       e.currentTarget.src = DEFAULT_REQUEST_IMAGE;
@@ -1367,14 +1384,14 @@ export default function Home() {
       )}
 
       {step === "pilotManage" && (
-        <section className="mx-auto max-w-6xl px-6 py-16">
-          <h2 className="text-5xl font-black tracking-tight">Creator Studio</h2>
+        <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16">
+          <h2 className="text-3xl font-black tracking-tight sm:text-5xl">Creator Studio</h2>
           <p className="mt-4 text-neutral-500">
             프로필 사진, 자기소개, 대표작을 등록하고 수정하세요.
           </p>
 
-          <div className="mt-10 grid gap-6 lg:grid-cols-2">
-            <div className="rounded-[2rem] bg-white p-8 shadow-sm">
+          <div className="mt-8 grid gap-5 sm:mt-10 lg:grid-cols-2">
+            <div className="rounded-[1.5rem] bg-white p-5 shadow-sm sm:rounded-[2rem] sm:p-8">
               <h3 className="text-2xl font-black">Profile</h3>
 
               <div className="mt-6 flex items-center gap-5">
@@ -1463,7 +1480,7 @@ export default function Home() {
               </button>
             </div>
 
-            <div className="rounded-[2rem] bg-white p-8 shadow-sm">
+            <div className="rounded-[1.5rem] bg-white p-5 shadow-sm sm:rounded-[2rem] sm:p-8">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-2xl font-black">
                   {editingWorkId ? "Portfolio 수정" : "Portfolio 등록"}
@@ -1582,8 +1599,8 @@ export default function Home() {
       )}
 
       {selectedPilot && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-[2rem] bg-white p-8">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm sm:p-4">
+          <div className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-[1.5rem] bg-white p-5 sm:rounded-[2rem] sm:p-8">
             <button
               onClick={() => setSelectedPilot(null)}
               className="float-right rounded-full bg-neutral-100 px-4 py-2 font-bold"
@@ -1598,7 +1615,7 @@ export default function Home() {
                 alt={selectedPilot.display_name}
               />
               <div>
-                <h2 className="text-5xl font-black tracking-tight">
+                <h2 className="text-3xl font-black tracking-tight sm:text-5xl">
                   {selectedPilot.display_name}
                 </h2>
                 <p className="mt-3 text-xl font-semibold text-neutral-500">
@@ -1613,7 +1630,7 @@ export default function Home() {
               {selectedPilot.portfolio_url ? (
                 <iframe
                   src={youtubeEmbed(selectedPilot.portfolio_url)}
-                  className="h-[420px] w-full rounded-[2rem]"
+                  className="h-56 w-full rounded-[1.5rem] sm:h-[420px] sm:rounded-[2rem]"
                   allowFullScreen
                 />
               ) : (
@@ -1633,7 +1650,7 @@ export default function Home() {
                       onError={(e) => {
                         e.currentTarget.src = DEFAULT_REQUEST_IMAGE;
                       }}
-                      className="h-40 w-full object-cover"
+                      className="h-36 w-full object-cover sm:h-40"
                       alt={item.title}
                     />
                     <div className="p-4">
@@ -1675,15 +1692,15 @@ export default function Home() {
       )}
 
       {selectedRequest && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-[2rem] bg-white p-8">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm sm:p-4">
+          <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-[1.5rem] bg-white p-5 sm:rounded-[2rem] sm:p-8">
             <button
               onClick={() => setSelectedRequest(null)}
               className="float-right rounded-full bg-neutral-100 px-4 py-2 font-bold"
             >
               닫기
             </button>
-            <h2 className="text-4xl font-black">{selectedRequest.title}</h2>
+            <h2 className="text-2xl font-black sm:text-4xl">{selectedRequest.title}</h2>
             <p className="mt-4 text-neutral-500">{selectedRequest.description}</p>
 
             <div className="mt-8 grid gap-3 text-sm text-neutral-600">
@@ -1692,14 +1709,14 @@ export default function Home() {
               <p>📅 마감 {selectedRequest.deadline}</p>
             </div>
 
-            <div className="mt-8 flex gap-3">
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               {session?.user?.id === selectedRequest.user_id && (
                 <button
                   onClick={() => {
                     setSelectedRequest(null);
                     startEditRequest(selectedRequest);
                   }}
-                  className="flex-1 rounded-full border border-neutral-300 p-4 font-black"
+                  className="w-full flex-1 rounded-full border border-neutral-300 p-4 font-black"
                 >
                   이 글 수정하기
                 </button>
@@ -1708,7 +1725,7 @@ export default function Home() {
               {session?.user?.id !== selectedRequest.user_id && (
                 <button
                   onClick={() => acceptRequest(selectedRequest)}
-                  className="flex-1 rounded-full bg-neutral-950 p-4 font-black text-white"
+                  className="w-full flex-1 rounded-full bg-neutral-950 p-4 font-black text-white"
                 >
                   이 의뢰 수락하기
                 </button>
